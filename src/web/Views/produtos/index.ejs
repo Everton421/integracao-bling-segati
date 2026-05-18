@@ -118,7 +118,7 @@
                                 </thead>
                                 <tbody>
                                     <% produtos.forEach((item, index) => { %>
-                                        <tr>
+                                        <tr data-status="<%= item.Id_bling !== null ? 'enviado' : 'pendente' %>">
                                             <th scope="row">
                                                 <input class="form-check-input product-checkbox"
                                                        type="checkbox"
@@ -281,7 +281,7 @@
 
                 const codigoProduto = $(this).find('td:nth-child(3)').text().toLowerCase();
                 const nomeProduto = $(this).find('td:nth-child(4)').text().toLowerCase();
-                const isEnviado = $(this).find('th:nth-child(2) span[data-feather="check-circle"]').length > 0;
+                const isEnviado = $(this).data('status') === 'enviado';
 
                 const matchesSearch = codigoProduto.includes(searchTerm) || nomeProduto.includes(searchTerm);
                 const matchesStatus = statusFilter === 'todos' ||
