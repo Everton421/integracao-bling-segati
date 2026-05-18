@@ -82,9 +82,13 @@
                 <% if (produtos && produtos.length > 0) { %>
                     <p>Total de produtos encontrados: <span class="badge bg-info"><%= produtos.length %></span></p>
 
-                    <!-- NOVO CAMPO DE PESQUISA -->
-                    <div class="mb-3">
+                    <div class="mb-3 d-flex gap-2">
                         <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Código ou Nome/Descrição...">
+                        <select id="statusFilter" class="form-select w-auto">
+                            <option value="todos">Todos</option>
+                            <option value="enviados">Enviados</option>
+                            <option value="pendentes">Pendentes</option>
+                        </select>
                     </div>
 
                     <form id="sendSelectedProductsForm" action="/api/produtos" method="POST">
@@ -265,22 +269,26 @@
             });
         });
 
-        // --- NOVO SCRIPT PARA FILTRAGEM DA TABELA ---
-        $('#searchInput').on('keyup', function() {
-            const searchTerm = $(this).val().toLowerCase().trim();
+        function applyFilters() {
+            const searchTerm = $('#searchInput').val().toLowerCase().trim();
+            const statusFilter = $('#statusFilter').val();
             let rowsFound = 0;
 
             $('#productsTable tbody tr').each(function() {
-                // Ignora a linha de "nenhum resultado"
                 if ($(this).attr('id') === 'noResultsFound') {
                     return;
                 }
 
-                const codigoProduto = $(this).find('td:nth-child(3)').text().toLowerCase(); // Coluna "Código"
-                const nomeProduto = $(this).find('td:nth-child(4)').text().toLowerCase(); // Coluna "Nome/Descrição"
+                const codigoProduto = $(this).find('td:nth-child(3)').text().toLowerCase();
+                const nomeProduto = $(this).find('td:nth-child(4)').text().toLowerCase();
+                const isEnviado = $(this).find('th:nth-child(2) span[data-feather="check-circle"]').length > 0;
 
-                // Verifica se o termo de pesquisa está presente no código OU no nome
-                if (codigoProduto.includes(searchTerm) || nomeProduto.includes(searchTerm)) {
+                const matchesSearch = codigoProduto.includes(searchTerm) || nomeProduto.includes(searchTerm);
+                const matchesStatus = statusFilter === 'todos' ||
+                    (statusFilter === 'enviados' && isEnviado) ||
+                    (statusFilter === 'pendentes' && !isEnviado);
+
+                if (matchesSearch && matchesStatus) {
                     $(this).show();
                     rowsFound++;
                 } else {
@@ -288,27 +296,19 @@
                 }
             });
 
-            // Mostra ou esconde a mensagem de "nenhum resultado"
-            if (rowsFound === 0 && searchTerm !== "") {
+            if (rowsFound === 0 && (searchTerm !== "" || statusFilter !== 'todos')) {
                 $('#noResultsFound').show();
             } else {
                 $('#noResultsFound').hide();
             }
 
-            // Importante: Ao filtrar, o checkbox "Selecionar Todos" pode ficar em um estado inconsistente
-            // com os itens visíveis. Você pode querer desmarcá-lo ou adicionar lógica para
-            // marcar apenas os visíveis. Por simplicidade, vamos desmarcá-lo se houver filtro.
-            if (searchTerm !== "") {
+            if (searchTerm !== "" || statusFilter !== 'todos') {
                 $('#selectAllCheckbox').prop('checked', false);
-            } else {
-                // Se o campo de pesquisa estiver vazio, verificar se todos os itens (agora visíveis)
-                // estão marcados para atualizar o "Selecionar Todos".
-                // Isso é opcional e pode ser complexo dependendo do fluxo desejado.
-                // Uma abordagem mais simples é deixar o usuário gerenciar o "selectAllCheckbox"
-                // independentemente do filtro ou reavaliar seu estado ao limpar o filtro.
             }
-        });
-        // --- FIM DO SCRIPT DE FILTRAGEM ---
+        }
+
+        $('#searchInput').on('keyup', applyFilters);
+        $('#statusFilter').on('change', applyFilters);
 
     });
     </script>

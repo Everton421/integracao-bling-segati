@@ -3,7 +3,6 @@ import { DateService } from "../../shared/utils/date-service";
 export class ApiTokenRepository{
 
     public token?:any;
-    private dateService = new DateService();
 
 
 async insereToken(json:any, database:any){
