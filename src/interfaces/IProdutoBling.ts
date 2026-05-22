@@ -19,7 +19,7 @@ export interface IProdutoBling{
     midia?:midia
     volumes:number
     tipoProducao:string
-    gtin:string
+    gtin:string | null
 }
 interface categoria{
     id:any

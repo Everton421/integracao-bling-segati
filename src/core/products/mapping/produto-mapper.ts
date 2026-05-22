@@ -3,6 +3,7 @@ import { PostFreeImgHost } from "../../imgs/services/post-img-service";
 import { IProdutoBling } from "../../../interfaces/IProdutoBling";
 import { ProdutoRepository } from "../data/produto-repository";
 import { CategoriaApiRepository } from "../../categories/data/categoria-api-repository";
+import { VerifyGtin } from "../../../shared/utils/verify-gtin";
 
 export type IProdutoBlingSemPreco = Omit<IProdutoBling, 'preco'>
 
@@ -54,8 +55,14 @@ export class ProdutoMapper {
       
       const arrUnidades = await ProdutoRepository.buscaUnidades(produto.CODIGO);
       const unidade = arrUnidades[0].SIGLA
-    const  gtin = produto.NUM_FABRICANTE
-      //envio de imagen
+
+    
+        const isValidGtin =  VerifyGtin.isValidGtin(produto.NUM_FABRICANTE);
+
+      const  gtin = isValidGtin ?  produto.NUM_FABRICANTE : null;
+      
+    
+    //envio de imagen
       //let links = await imgController.postFoto( produto ) ;
        const resultFotos = await freeImgHost.postFoto(produto) as [{ link: string }];
       
@@ -71,7 +78,7 @@ export class ProdutoMapper {
         tipo: 'P',
         marca: marca,
         situacao: 'A',
-        gtin:gtin ,
+        gtin: gtin ,
         unidade: unidade,
         tipoProducao:'T',
         volumes: produto.QTDE_VOL,
