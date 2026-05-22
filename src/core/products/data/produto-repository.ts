@@ -185,9 +185,36 @@ static  async buscaPreco( produto:any, tabela:any ):Promise<prodPreco[]>{
      * @param codigo codigo da marca
      * @returns 
      */
-static    async buscaMarcaProduto( codigo:any):Promise< [ { CODIGO:number, DESCRICAO:string  } ] >{
+ static    async buscaMarcaProduto( codigo:any):Promise< [ { CODIGO:number, DESCRICAO:string  } ] >{
     return new Promise( async (resolve, reject)=>{
         const sql = `SELECT CODIGO  ,DESCRICAO   FROM ${db_publico}.cad_pmar where CODIGO=${codigo};` 
+      await conn.query(sql,(err, result)=>{
+        if(err){
+          reject(err);
+        }else{  
+          resolve(result);
+        }
+      })
+    })
+  }
+
+  static    async buscaMarcas( ):Promise< [ { CODIGO:number, DESCRICAO:string  } ] >{
+    return new Promise( async (resolve, reject)=>{
+        const sql = `SELECT CODIGO  ,DESCRICAO   FROM ${db_publico}.cad_pmar ;` 
+      await conn.query(sql,(err, result)=>{
+        if(err){
+          reject(err);
+        }else{  
+          resolve(result);
+        }
+      })
+    })
+  }
+  
+
+  static async buscaGrupos():Promise< [ { CODIGO:number, NOME:string  } ] >{
+      return new Promise( async (resolve, reject)=>{
+        const sql = `SELECT CODIGO  ,NOME   FROM ${db_publico}.cad_pgru WHERE ATIVO = 'S';` 
       await conn.query(sql,(err, result)=>{
         if(err){
           reject(err);

@@ -89,6 +89,18 @@
                             <option value="enviados">Enviados</option>
                             <option value="pendentes">Pendentes</option>
                         </select>
+                        <select id="grupoFilter" class="form-select w-auto">
+                            <option value="todos">Todos os Grupos</option>
+                            <% grupos.forEach(g => { %>
+                                <option value="<%= g.CODIGO %>"><%= g.NOME %></option>
+                            <% }) %>
+                        </select>
+                        <select id="marcaFilter" class="form-select w-auto">
+                            <option value="todos">Todas as Marcas</option>
+                            <% marcas.forEach(m => { %>
+                                <option value="<%= m.CODIGO %>"><%= m.DESCRICAO %></option>
+                            <% }) %>
+                        </select>
                     </div>
 
                     <form id="sendSelectedProductsForm" action="/api/produtos" method="POST">
@@ -118,7 +130,7 @@
                                 </thead>
                                 <tbody>
                                     <% produtos.forEach((item, index) => { %>
-                                        <tr data-status="<%= item.Id_bling !== null ? 'enviado' : 'pendente' %>">
+                                        <tr data-status="<%= item.Id_bling !== null ? 'enviado' : 'pendente' %>" data-grupo="<%= item.GRUPO %>" data-marca="<%= item.MARCA %>">
                                             <th scope="row">
                                                 <input class="form-check-input product-checkbox"
                                                        type="checkbox"
@@ -276,6 +288,8 @@
         function applyFilters() {
             const searchTerm = $('#searchInput').val().toLowerCase().trim();
             const statusFilter = $('#statusFilter').val();
+            const grupoFilter = $('#grupoFilter').val();
+            const marcaFilter = $('#marcaFilter').val();
             let rowsFound = 0;
 
             $('#productsTable tbody tr').each(function() {
@@ -286,13 +300,17 @@
                 const codigoProduto = $(this).find('td:nth-child(3)').text().toLowerCase();
                 const nomeProduto = $(this).find('td:nth-child(4)').text().toLowerCase();
                 const isEnviado = $(this).data('status') === 'enviado';
+                const grupo = String($(this).data('grupo'));
+                const marca = String($(this).data('marca'));
 
                 const matchesSearch = codigoProduto.includes(searchTerm) || nomeProduto.includes(searchTerm);
                 const matchesStatus = statusFilter === 'todos' ||
                     (statusFilter === 'enviados' && isEnviado) ||
                     (statusFilter === 'pendentes' && !isEnviado);
+                const matchesGrupo = grupoFilter === 'todos' || grupo === grupoFilter;
+                const matchesMarca = marcaFilter === 'todos' || marca === marcaFilter;
 
-                if (matchesSearch && matchesStatus) {
+                if (matchesSearch && matchesStatus && matchesGrupo && matchesMarca) {
                     $(this).show();
                     rowsFound++;
                 } else {
@@ -300,19 +318,21 @@
                 }
             });
 
-            if (rowsFound === 0 && (searchTerm !== "" || statusFilter !== 'todos')) {
+            if (rowsFound === 0 && (searchTerm !== "" || statusFilter !== 'todos' || grupoFilter !== 'todos' || marcaFilter !== 'todos')) {
                 $('#noResultsFound').show();
             } else {
                 $('#noResultsFound').hide();
             }
 
-            if (searchTerm !== "" || statusFilter !== 'todos') {
+            if (searchTerm !== "" || statusFilter !== 'todos' || grupoFilter !== 'todos' || marcaFilter !== 'todos') {
                 $('#selectAllCheckbox').prop('checked', false);
             }
         }
 
         $('#searchInput').on('keyup', applyFilters);
         $('#statusFilter').on('change', applyFilters);
+        $('#grupoFilter').on('change', applyFilters);
+        $('#marcaFilter').on('change', applyFilters);
 
     });
     </script>

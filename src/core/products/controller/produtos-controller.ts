@@ -156,4 +156,15 @@ export class ProdutoController {
         res.status(200).json({ resultados: arrResult.toString() })
     }
 
+
+    async viewProducts(req: Request, res: Response){
+    const produtos = await ProdutoApiRepository.buscaTodos();
+    const tabelas = await ProdutoRepository.buscaTabelaDePreco();
+    const grupos = await ProdutoRepository.buscaGrupos();
+    const marcas = await ProdutoRepository.buscaMarcas();
+
+    res.render('produtos', { 'produtos': produtos, 'tabelas': tabelas , 'grupos':grupos , 'marcas':marcas});
+
+    }
+
 }

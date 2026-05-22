@@ -40,13 +40,7 @@ router.get('/config', async (req, res) => {
   res.render('config', { 'config': data, 'tabelas': tabelas });
 })
 
-router.get('/produtos', verificaToken, async (req, res) => {
-  const produtos = await ProdutoApiRepository.buscaTodos();
-  const tabelas = await ProdutoRepository.buscaTabelaDePreco();
-  res.render('produtos', { 'produtos': produtos, 'tabelas': tabelas });
-
-
-})
+router.get('/produtos', verificaToken, new ProdutoController().viewProducts);
 
 
 router.get('/produtos/:codigo', verificaToken, new ProdutoEditarController().execute)

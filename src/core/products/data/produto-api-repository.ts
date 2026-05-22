@@ -44,6 +44,8 @@ type IProdutoApiSystem= { //
 
     CODIGO:number
     DESCRICAO:string
+    GRUPO: number
+    MARCA: number
     /**  descricao vinda da tabela do sistema */
 }
 
@@ -131,7 +133,10 @@ export class ProdutoApiRepository{
 
                      SELECT 
                            itp.*,
-                            P.CODIGO,P.DESCRICAO
+                            P.CODIGO,
+                            P.DESCRICAO,
+                            P.GRUPO,
+                            P.MARCA
                       from ${db_publico}.cad_prod P
                           LEFT JOIN  ${database_api}.produtos AS itp ON itp.codigo_sistema = P.CODIGO
                           WHERE P.NO_SITE = 'S' AND P.ATIVO = 'S'
