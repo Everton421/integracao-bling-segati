@@ -132,6 +132,7 @@ router.get("/testeCompany",async  ( req, res )=>{
  }
  
  teste()
+ console.log("teste")
 })
 
 // router.get("/testeNaturezaOperacao",async  ( req, res )=>{

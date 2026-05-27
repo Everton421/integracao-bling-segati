@@ -166,9 +166,6 @@ export class ProdutoController {
     }
 
 
-
-
-
     async enviaProduto(req: Request, res: Response) {
         const produtoSelecionados: string[] = req.body.produtos;
         let arrResult = []

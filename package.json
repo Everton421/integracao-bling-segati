@@ -5,8 +5,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --transpile-only src/server.ts",
+    "teste-naturezaoperacao": "tsx  src/core/invoices/__test__/get-natureza-operacao-request.ts",
     "build": "tsc && shx cp -r src/web/Views dist/web/Views",
-    "start": "node /dics/server.js"
+    "start": "node /dist/server.js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -28,6 +29,7 @@
     "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "tsx": "^4.22.3"
   }
 }
