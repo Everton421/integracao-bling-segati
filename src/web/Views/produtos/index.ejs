@@ -79,29 +79,43 @@
                     </div>
                 </div>
 
-                <% if (produtos && produtos.length > 0) { %>
-                    <p>Total de produtos encontrados: <span class="badge bg-info"><%= produtos.length %></span></p>
+                <% if (produtos && produtos.length > 0 || total > 0) { %>
+                    <p>
+                        Total de produtos encontrados: <span class="badge bg-info"><%= total %></span>
+                        <% if (total > limit) { %>
+                            <span class="text-muted ms-2">(Página <%= page %> de <%= totalPages %> — exibindo <%= produtos.length %> produtos)</span>
+                        <% } %>
+                    </p>
 
-                    <div class="mb-3 d-flex gap-2">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por Código ou Nome/Descrição...">
-                        <select id="statusFilter" class="form-select w-auto">
-                            <option value="todos">Todos</option>
-                            <option value="enviados">Enviados</option>
-                            <option value="pendentes">Pendentes</option>
-                        </select>
-                        <select id="grupoFilter" class="form-select w-auto">
-                            <option value="todos">Todos os Grupos</option>
-                            <% grupos.forEach(g => { %>
-                                <option value="<%= g.CODIGO %>"><%= g.NOME %></option>
-                            <% }) %>
-                        </select>
-                        <select id="marcaFilter" class="form-select w-auto">
-                            <option value="todos">Todas as Marcas</option>
-                            <% marcas.forEach(m => { %>
-                                <option value="<%= m.CODIGO %>"><%= m.DESCRICAO %></option>
-                            <% }) %>
-                        </select>
-                    </div>
+                    <form method="GET" action="/produtos" class="mb-3">
+                        <div class="d-flex gap-2">
+                            <input type="text" id="searchInput" name="search" class="form-control" placeholder="Pesquisar por Código ou Nome/Descrição..." value="<%= search %>">
+                            <select id="statusFilter" name="status" class="form-select w-auto" onchange="this.form.submit()">
+                                <option value="todos" <%= statusFilter === 'todos' ? 'selected' : '' %>>Todos</option>
+                                <option value="enviados" <%= statusFilter === 'enviados' ? 'selected' : '' %>>Enviados</option>
+                                <option value="pendentes" <%= statusFilter === 'pendentes' ? 'selected' : '' %>>Pendentes</option>
+                            </select>
+                            <select id="grupoFilter" name="grupo" class="form-select w-auto" onchange="this.form.submit()">
+                                <option value="todos">Todos os Grupos</option>
+                                <% grupos.forEach(g => { %>
+                                    <option value="<%= g.CODIGO %>" <%= String(grupoFilter) === String(g.CODIGO) ? 'selected' : '' %>><%= g.NOME %></option>
+                                <% }) %>
+                            </select>
+                            <select id="marcaFilter" name="marca" class="form-select w-auto" onchange="this.form.submit()">
+                                <option value="todos">Todas as Marcas</option>
+                                <% marcas.forEach(m => { %>
+                                    <option value="<%= m.CODIGO %>" <%= String(marcaFilter) === String(m.CODIGO) ? 'selected' : '' %>><%= m.DESCRICAO %></option>
+                                <% }) %>
+                            </select>
+                            <select id="limitSelect" name="limit" class="form-select w-auto" onchange="this.form.submit()">
+                                <option value="25" <%= limit === 25 ? 'selected' : '' %>>25</option>
+                                <option value="50" <%= limit === 50 ? 'selected' : '' %>>50</option>
+                                <option value="100" <%= limit === 100 ? 'selected' : '' %>>100</option>
+                                <option value="200" <%= limit === 200 ? 'selected' : '' %>>200</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Filtrar</button>
+                        </div>
+                    </form>
 
                     <form id="sendSelectedProductsForm" action="/api/produtos" method="POST">
 
@@ -180,10 +194,6 @@
                                             </td>
                                         </tr>
                                     <% }) %>
-                                    <!-- Linha para exibir quando não houver resultados na pesquisa -->
-                                    <tr id="noResultsFound" style="display: none;">
-                                        <td colspan="6" class="no-results">Nenhum produto encontrado para sua pesquisa.</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -191,6 +201,29 @@
                     </form>
                     <!-- FIM DO FORMULÁRIO -->
 
+                    <% if (totalPages > 1) { %>
+                    <nav aria-label="Paginação">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+                                <a class="page-link" href="?search=<%= search %>&status=<%= statusFilter %>&grupo=<%= grupoFilter %>&marca=<%= marcaFilter %>&limit=<%= limit %>&page=<%= page - 1 %>">Anterior</a>
+                            </li>
+                            <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+                                <li class="page-item <%= i === page ? 'active' : '' %>">
+                                    <a class="page-link" href="?search=<%= search %>&status=<%= statusFilter %>&grupo=<%= grupoFilter %>&marca=<%= marcaFilter %>&limit=<%= limit %>&page=<%= i %>"><%= i %></a>
+                                </li>
+                            <% } %>
+                            <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+                                <a class="page-link" href="?search=<%= search %>&status=<%= statusFilter %>&grupo=<%= grupoFilter %>&marca=<%= marcaFilter %>&limit=<%= limit %>&page=<%= page + 1 %>">Próximo</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <% } %>
+
+                <% } else if (search || statusFilter !== 'todos' || grupoFilter !== 'todos' || marcaFilter !== 'todos') { %>
+                    <div class="alert alert-warning" role="alert">
+                        Nenhum produto encontrado para os filtros aplicados.
+                        <a href="/produtos" class="alert-link">Limpar filtros</a>
+                    </div>
                 <% } else { %>
                     <div class="alert alert-warning" role="alert">
                         Nenhum produto sincronizado encontrado.
@@ -285,54 +318,11 @@
             });
         });
 
-        function applyFilters() {
-            const searchTerm = $('#searchInput').val().toLowerCase().trim();
-            const statusFilter = $('#statusFilter').val();
-            const grupoFilter = $('#grupoFilter').val();
-            const marcaFilter = $('#marcaFilter').val();
-            let rowsFound = 0;
-
-            $('#productsTable tbody tr').each(function() {
-                if ($(this).attr('id') === 'noResultsFound') {
-                    return;
-                }
-
-                const codigoProduto = $(this).find('td:nth-child(3)').text().toLowerCase();
-                const nomeProduto = $(this).find('td:nth-child(4)').text().toLowerCase();
-                const isEnviado = $(this).data('status') === 'enviado';
-                const grupo = String($(this).data('grupo'));
-                const marca = String($(this).data('marca'));
-
-                const matchesSearch = codigoProduto.includes(searchTerm) || nomeProduto.includes(searchTerm);
-                const matchesStatus = statusFilter === 'todos' ||
-                    (statusFilter === 'enviados' && isEnviado) ||
-                    (statusFilter === 'pendentes' && !isEnviado);
-                const matchesGrupo = grupoFilter === 'todos' || grupo === grupoFilter;
-                const matchesMarca = marcaFilter === 'todos' || marca === marcaFilter;
-
-                if (matchesSearch && matchesStatus && matchesGrupo && matchesMarca) {
-                    $(this).show();
-                    rowsFound++;
-                } else {
-                    $(this).hide();
-                }
-            });
-
-            if (rowsFound === 0 && (searchTerm !== "" || statusFilter !== 'todos' || grupoFilter !== 'todos' || marcaFilter !== 'todos')) {
-                $('#noResultsFound').show();
-            } else {
-                $('#noResultsFound').hide();
+        $('#searchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                $(this).closest('form').submit();
             }
-
-            if (searchTerm !== "" || statusFilter !== 'todos' || grupoFilter !== 'todos' || marcaFilter !== 'todos') {
-                $('#selectAllCheckbox').prop('checked', false);
-            }
-        }
-
-        $('#searchInput').on('keyup', applyFilters);
-        $('#statusFilter').on('change', applyFilters);
-        $('#grupoFilter').on('change', applyFilters);
-        $('#marcaFilter').on('change', applyFilters);
+        });
 
     });
     </script>

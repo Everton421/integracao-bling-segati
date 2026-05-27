@@ -23,7 +23,7 @@ export class ProdutoController {
     /**  controlador responsavel por gerar o vinculo do produto e enviar o estoque
      *função ideal para clientes que ja possuem produtos cadastrados no bling   
     */
-    async geraVinculo(req: Request, res: Response) {
+    async geraVinculo(req: Request, res: Response) {    
 
         const produtoSelecionados: string[] = req.body.produtos;
 
@@ -47,10 +47,7 @@ export class ProdutoController {
                 const codigoSistema: number = parseInt(i);
                 const produtoSincronizado = await ProdutoApiRepository.findByCodeSystem(parseInt(i));
 
-                const resultSaldoProduto = await  ProdutoRepository.buscaEstoqueReal(codigoSistema, 1)
-                const saldoProduto = resultSaldoProduto[0].ESTOQUE;
-                const data_estoque = resultSaldoProduto[0].DATA_RECAD;
-
+              
                 const arrProductSystem = await ProdutoRepository.buscaProduto(codigoSistema)
                 const productSystem = arrProductSystem[0];
 
@@ -69,13 +66,30 @@ export class ProdutoController {
                     let resultPostEstoque
                     await this.delay(1000);
                     let msgRetorno;
+                   
+                    let saldoProduto = 0;
+                          let data_estoque = '0000-00-00 00:00:00';
 
                     if (envEstoque > 0) {
+
+                          try{
+                               const resultSaldoProduto = await  ProdutoRepository.buscaEstoqueReal(codigoSistema, 1)
+                             if(resultSaldoProduto.length > 0 ){
+                                saldoProduto = resultSaldoProduto[0].ESTOQUE || 0;
+                                data_estoque= resultSaldoProduto[0].DATA_RECAD
+                             }
+
+                          } catch(e){
+                            console.log(`[x] ocorreu um erro ao tentar consultar o estoque do produtos ${codigoSistema}`)
+                          }
+
                         resultPostEstoque = await this.syncStock.postEstoque(produtoSincronizado[0].Id_bling, saldoProduto, idDepositoBling, produtoSincronizado[0].codigo_sistema, data_estoque)
                         if (resultPostEstoque && resultPostEstoque.msg) {
                             msgRetorno = resultPostEstoque.msg;
                         }
                     }
+
+
                     if (envPreco > 0) {
 
                         let arrPreco = await ProdutoRepository.buscaPreco(codigoSistema, tabela_preco)
@@ -97,13 +111,26 @@ export class ProdutoController {
 
                         if (resultVinculo?.ok) {
                             await this.delay(1000);
-
-                            let prodVinculo;
+                            
+                            let prodVinculo = resultVinculo?.produto;
                             let resultEstoque;
                             let msgRetorno;
                             if (envEstoque > 0) {
-                                if (resultVinculo?.produto !== null) {
-                                    prodVinculo = resultVinculo?.produto
+                            let saldoProduto = 0;
+                            let data_estoque = '0000-00-00 00:00:00';
+
+                            try{
+                                    const resultSaldoProduto = await  ProdutoRepository.buscaEstoqueReal(codigoSistema, 1)
+                                    if(resultSaldoProduto.length > 0 ){
+                                        saldoProduto = resultSaldoProduto[0].ESTOQUE || 0;
+                                        data_estoque= resultSaldoProduto[0].DATA_RECAD || '0000-00-00 00:00:00'
+                                    }
+
+                                } catch(e){
+                                    console.log(`[x] ocorreu um erro ao tentar consultar o estoque do produtos ${codigoSistema}`)
+                                }
+
+                                if (prodVinculo) {
                                     resultEstoque = await this.syncStock.postEstoque(prodVinculo.id_bling, saldoProduto, idDepositoBling, prodVinculo?.codigo_sistema, data_estoque)
                                     if (resultEstoque && resultEstoque.msg) {
                                         msgRetorno = resultEstoque.msg;
@@ -111,21 +138,22 @@ export class ProdutoController {
                                 }
                             }
 
-                            if (envPreco > 0) {
-                                if (resultVinculo?.produto !== null) {
-                                    let arrPreco = await ProdutoRepository.buscaPreco(codigoSistema, tabela_preco)
-                                    let resultEnvPreco = await this.syncPrice.postPrice(produtoSincronizado[0].Id_bling, produtoSincronizado[0].codigo_sistema, tabela_preco);
-
+                             if (envPreco > 0) {
+                                if (prodVinculo) {
+                                    let resultEnvPreco = await this.syncPrice.postPrice(prodVinculo.id_bling, prodVinculo?.codigo_sistema, tabela_preco);
                                     if (resultEnvPreco && resultEnvPreco.msg) {
                                         msgRetorno = resultEnvPreco.msg;
                                     }
                                 }
                             }
-
+                             
+                            
                             responseIntegracao = msgRetorno
                         } else {
                             responseIntegracao = resultVinculo.msg;
                         }
+                    }else{
+                        console.log("Nao foi possivel obter o vinculo do produto")
                     }
 
                 }
@@ -158,13 +186,39 @@ export class ProdutoController {
 
 
     async viewProducts(req: Request, res: Response){
-    const produtos = await ProdutoApiRepository.buscaTodos();
-    const tabelas = await ProdutoRepository.buscaTabelaDePreco();
-    const grupos = await ProdutoRepository.buscaGrupos();
-    const marcas = await ProdutoRepository.buscaMarcas();
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.max(1, parseInt(req.query.limit as string) || 50);
+        const search = (req.query.search as string) || '';
+        const status = (req.query.status as string) || 'todos';
+        const grupo = (req.query.grupo as string) || 'todos';
+        const marca = (req.query.marca as string) || 'todos';
 
-    res.render('produtos', { 'produtos': produtos, 'tabelas': tabelas , 'grupos':grupos , 'marcas':marcas});
+        const filters = { search, status, grupo, marca };
 
+        const [produtos, total, tabelas, grupos, marcas] = await Promise.all([
+            ProdutoApiRepository.buscaTodosPaginado(page, limit, filters),
+            ProdutoApiRepository.contaTotal(filters),
+            ProdutoRepository.buscaTabelaDePreco(),
+            ProdutoRepository.buscaGrupos(),
+            ProdutoRepository.buscaMarcas()
+        ]);
+
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        res.render('produtos', {
+            produtos,
+            tabelas,
+            grupos,
+            marcas,
+            page,
+            limit,
+            total,
+            totalPages,
+            search,
+            statusFilter: status,
+            grupoFilter: grupo,
+            marcaFilter: marca
+        });
     }
 
 }

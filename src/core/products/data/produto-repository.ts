@@ -239,5 +239,42 @@ static  async buscaUnidades ( codigo:any):Promise< [ { PRODUTO:number, DESCRICAO
     })
   }
 
+  static async buscaParaexportaçãoexcel(){
+    const sql = `
+    SELECT
+               
+                p.CODIGO as Código,
+                p.DESCRICAO as Descrição,
+                
+                  un.SIGLA as Unidade,
+                  cf.NCM,
+                p.ORIGEM Origem,
+                tp.PRECO Preço,
+            p.LARGURA 'Largura do Produto',
+                p.PESO 'Peso líquido (Kg)',
+               p.NUM_FABRICANTE as 'GTIN/EAN' ,
+                p.ALTURA 'Altura do Produto',
+                  p.COMPRIMENTO 'Profundidade do produto',
+                  p.qtde_vol 'Itens p/ caixa',
+                  
+                CAST(p.APLICACAO AS CHAR(10000) CHARACTER SET latin1) AS APLICACAO,
+                
+              m.descricao AS Marca,
+                p.DESCRICAO as 'Descrição Curta',
+               concat(p.GARANTIA, ' MESES') as 'Meses Garantia no Fornecedor' 
+              
+      
+            FROM  cad_prod p
+              JOIN  cad_pgru cg ON cg.CODIGO = p.GRUPO
+            LEFT JOIN  cad_pmar m ON m.codigo = p.marca
+            LEFT JOIN   class_fiscal cf ON cf.CODIGO = p.CLASS_FISCAL
+            LEFT JOIN  subgrupos sg ON sg.CODIGO = p.SUBGRUPO AND cg.CODIGO = sg.COD_GRUPO
+            left join unid_prod un on un.produto = p.codigo
+       
+           LEFT JOIN  prod_tabprecos tp ON p.CODIGO = tp.PRODUTO and tp.tabela =1
+           where p.ativo  ='S'
+        
+    ` 
+  }
 
 }

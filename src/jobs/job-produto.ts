@@ -28,5 +28,26 @@ export class JobProduto{
             }
             await ApiConfigRepository.atualizaDados({ ult_env_produto: data})
         }
+
+
+        async jobgetVinculoProduct(){
+            const arrProdutos = await ProdutoApiRepository.buscaNaoSincronizados();
+            console.log(`[V] ${arrProdutos.length} produtos pendentes de vinculo encontrados.`);
+
+            for( const produto of arrProdutos ){
+                try {
+                    await this.syncProduct.getVinculoProduto({ codigo: Number(produto.CODIGO), data_recad_sistema: produto.DATA_RECAD });
+                    await this.delay(1200);
+                } catch (error: any) {
+                    console.log(`[X] Erro ao processar vinculo do produto ${produto.CODIGO}: ${error.message || error}`);
+                }
+            }
+
+            console.log('[V] Processo de vinculo de produtos finalizado.');
+        }
+
+        private delay(ms: number) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
     
 }

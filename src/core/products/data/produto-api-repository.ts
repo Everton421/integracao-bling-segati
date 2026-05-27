@@ -127,29 +127,101 @@ export class ProdutoApiRepository{
 
 
 
-    static    async buscaTodos():Promise <IProdutoApiSystem[]> {
-            return new Promise( async ( resolve, reject )=>{
-               const sql = `  
+    static async buscaTodosPaginado(
+        page: number,
+        limit: number,
+        filters?: { search?: string; status?: string; grupo?: string; marca?: string }
+    ): Promise<IProdutoApiSystem[]> {
+        return new Promise(async (resolve, reject) => {
+            const conditions: string[] = ["P.NO_SITE = 'S'", "P.ATIVO = 'S'"];
+            const params: any[] = [];
 
-                     SELECT 
-                           itp.*,
-                            P.CODIGO,
-                            P.DESCRICAO,
-                            P.GRUPO,
-                            P.MARCA
-                      from ${db_publico}.cad_prod P
-                          LEFT JOIN  ${database_api}.produtos AS itp ON itp.codigo_sistema = P.CODIGO
-                          WHERE P.NO_SITE = 'S' AND P.ATIVO = 'S'
-                ;`
-                await conn_api.query(sql, (err, result:IProdutoApiSystem[])=>{
-                    if(err){
-                        reject(err);
-                    }else{
-                        resolve(result);
-                    }
-                })
-            })
-        }
+            if (filters?.search) {
+                conditions.push('(P.CODIGO LIKE ? OR P.DESCRICAO LIKE ?)');
+                const term = `%${filters.search}%`;
+                params.push(term, term);
+            }
+            if (filters?.status === 'enviados') {
+                conditions.push('itp.Id_bling IS NOT NULL');
+            } else if (filters?.status === 'pendentes') {
+                conditions.push('itp.Id_bling IS NULL');
+            }
+            if (filters?.grupo && filters.grupo !== 'todos') {
+                conditions.push('P.GRUPO = ?');
+                params.push(Number(filters.grupo));
+            }
+            if (filters?.marca && filters.marca !== 'todos') {
+                conditions.push('P.MARCA = ?');
+                params.push(Number(filters.marca));
+            }
+
+            const offset = (page - 1) * limit;
+            params.push(limit, offset);
+
+            const sql = `
+                SELECT
+                    itp.*,
+                    P.CODIGO,
+                    P.DESCRICAO,
+                    P.GRUPO,
+                    P.MARCA
+                FROM ${db_publico}.cad_prod P
+                    LEFT JOIN ${database_api}.produtos AS itp ON itp.codigo_sistema = P.CODIGO
+                WHERE ${conditions.join(' AND ')}
+                ORDER BY P.CODIGO
+                LIMIT ? OFFSET ?
+            `;
+
+            await conn_api.query(sql, params, (err, result: IProdutoApiSystem[]) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+
+    static async contaTotal(filters?: { search?: string; status?: string; grupo?: string; marca?: string }): Promise<number> {
+        return new Promise(async (resolve, reject) => {
+            const conditions: string[] = ["P.NO_SITE = 'S'", "P.ATIVO = 'S'"];
+            const params: any[] = [];
+
+            if (filters?.search) {
+                conditions.push('(P.CODIGO LIKE ? OR P.DESCRICAO LIKE ?)');
+                const term = `%${filters.search}%`;
+                params.push(term, term);
+            }
+            if (filters?.status === 'enviados') {
+                conditions.push('itp.Id_bling IS NOT NULL');
+            } else if (filters?.status === 'pendentes') {
+                conditions.push('itp.Id_bling IS NULL');
+            }
+            if (filters?.grupo && filters.grupo !== 'todos') {
+                conditions.push('P.GRUPO = ?');
+                params.push(Number(filters.grupo));
+            }
+            if (filters?.marca && filters.marca !== 'todos') {
+                conditions.push('P.MARCA = ?');
+                params.push(Number(filters.marca));
+            }
+
+            const sql = `
+                SELECT COUNT(*) as total
+                FROM ${db_publico}.cad_prod P
+                    LEFT JOIN ${database_api}.produtos AS itp ON itp.codigo_sistema = P.CODIGO
+                WHERE ${conditions.join(' AND ')}
+            `;
+
+            await conn_api.query(sql, params, (err, result: any[]) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result[0].total);
+                }
+            });
+        });
+    }
 
        static  async buscaSincronizados():Promise<IProdutoApi[]>{
             return new Promise( async ( resolve, reject )=>{
@@ -164,6 +236,30 @@ export class ProdutoApiRepository{
                 })
             })
         }
+
+            static  async buscaNaoSincronizados():Promise< [ {CODIGO:number, DATA_RECAD:string} ]>{
+            return new Promise( async ( resolve, reject )=>{
+               const sql  = `   
+                    select 
+                        cp.CODIGO,
+                        cp.DATA_RECAD
+                        from ${db_publico}.cad_prod cp 
+                        left join ${database_api}.produtos p on p.codigo_sistema = cp.codigo
+                        where 
+                            p.Id_bling is null and 
+                            cp.ativo = 'S'
+                ;`
+            
+                await conn_api.query(sql, (err, result)=>{
+                    if(err){
+                        reject(err);
+                    }else{
+                        resolve(result);
+                    }
+                })
+            })
+        }
+
         /**
          *  obtem os produtos enviados após a data informada
          * @param data 
@@ -222,7 +318,6 @@ export class ProdutoApiRepository{
   static      async atualizaSaldoEnviado( id:any, saldo:any, data_estoque:string ){
             return new Promise( async ( resolve, reject )=>{
                 const sql = ` UPDATE ${database_api}.produtos set saldo_enviado = ${saldo}, data_estoque = '${data_estoque}'  WHERE  Id_bling = ${id} ;`
-
                 await conn_api.query(sql, (err, result )=>{
                     if(err){
                         reject(err);

@@ -42,24 +42,26 @@ export class  SyncProduct{
      * @returns 
      */     
     async getVinculoProduto(dados:  { codigo:number,data_recad_sistema:string }) {
-        
-        let produtoSemVinculo: any = [];
-        let variacaoSemVinculo: any = [];
-        let tipoVariacao = 'N'
-        let comVariacao = 'N'
+        try {
+            await this.api.configurarApi();
+
+            const { data_recad_sistema } =dados;
+            const data_recad = data_recad_sistema || DateService.obterDataHoraAtual();
+
+            let tipoVariacao = 'N'
+            let comVariacao = 'N'
             let dadosProdutoBling:any[]=[]
 
-            produtoSemVinculo = await this.api.config.get('/produtos', {
+            const produtoSemVinculo = await this.api.config.get('/produtos', {
                 params: {
                     pagina: 1,
                     limite: 100,
                     criterio: 2,
-                   // tipo: 'P',
                     codigo: dados.codigo
                 }
             })
             await this.delay(1000);
- 
+
                if(produtoSemVinculo.data.data.length > 0){
                     dadosProdutoBling = produtoSemVinculo.data.data;
                     if( dadosProdutoBling[0].idProdutoPai && dadosProdutoBling[0].formato === 'S' ){
@@ -70,34 +72,37 @@ export class  SyncProduct{
                           comVariacao = 'S'
                     }
                 }
-                
-//            console.log(produtoSemVinculo.data.data) 
-        if (dadosProdutoBling.length > 0) {
-            const produtoEnviado = {
-                id_bling: dadosProdutoBling[0].id,
-                codigo_sistema: dados.codigo,
-                descricao: dadosProdutoBling[0].nome,
-                saldo: 0,
-                variacao: tipoVariacao,
-                com_variacao: comVariacao,
-                data_recad_sistema: DateService.formatarDataHora(dados.data_recad_sistema),
-                data_estoque: DateService.obterDataHoraAtual(),
-                data_envio: DateService.obterDataHoraAtual(),
-                data_preco:'2001-01-01 10:00:00'
-            }
-            try {
-                let prod: any = await ProdutoApiRepository.inserir(produtoEnviado);
-                 if (prod.affectedRows === 1) {
-                     return { ok: true, erro:false, produto: produtoEnviado ,msg:   ` Registrado vinculo para o produto: ${ dados.codigo}     idBling: ${ dadosProdutoBling[0].id } `  }
+
+            if (dadosProdutoBling.length > 0) {
+                const produtoEnviado = {
+                    id_bling: dadosProdutoBling[0].id,
+                    codigo_sistema: dados.codigo,
+                    descricao: dadosProdutoBling[0].nome,
+                    saldo: 0,
+                    variacao: tipoVariacao,
+                    com_variacao: comVariacao,
+                    data_recad_sistema: data_recad,
+                    data_estoque: DateService.obterDataHoraAtual(),
+                    data_envio: DateService.obterDataHoraAtual(),
+                    data_preco:'2001-01-01 10:00:00'
                 }
-            } catch (error) {
-                console.log(error)
-                return { ok: false, erro: true, produto:null , msg:   ` Ocorreu um erro ao tentar registrar vinculo para o produto: ${ dados.codigo}     idBling: ${ dadosProdutoBling[0].id } `  }
+                try {
+                    let prod: any = await ProdutoApiRepository.inserir(produtoEnviado);
+                     if (prod.affectedRows === 1) {
+                         console.log(`[V] Vinculo registrado: ${dados.codigo} -> ${dadosProdutoBling[0].id}`);
+                         return { ok: true, erro:false, produto: produtoEnviado ,msg:   ` Registrado vinculo para o produto: ${ dados.codigo}     idBling: ${ dadosProdutoBling[0].id } `  }
+                    }
+                } catch (error) {
+                    console.log(error)
+                    return { ok: false, erro: true, produto:null , msg:   ` Ocorreu um erro ao tentar registrar vinculo para o produto: ${ dados.codigo}     idBling: ${ dadosProdutoBling[0].id } `  }
+                }
+            } else {
+                 return { ok: false, erro: true, produto:null , msg:    `  Não foi encontrado produto: ${ dados.codigo} no bling `  }
             }
-        } else {
-             return { ok: false, erro: true, produto:null , msg:    `  Não foi encontrado produto: ${ dados.codigo} no bling `  }
+        } catch (error: any) {
+            console.log(`[X] Erro em getVinculoProduto para o produto ${dados.codigo}: ${error.message || error}`);
+            return { ok: false, erro: true, produto: null, msg: `Erro ao processar vinculo do produto ${dados.codigo}` };
         }
-         
     }
 
  

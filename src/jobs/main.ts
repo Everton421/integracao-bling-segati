@@ -145,5 +145,29 @@ export  class Job{
 
           });
       }
+
+
+      if(config.enviar_produtos === 'S'){
+          let inExec = false;
+
+          cron.schedule(tempoProduto, async () => {
+              if(inExec){
+                  console.log('[X] Processo de vinculo dos produtos ja esta em execução');
+                 return;
+              }
+
+              inExec = true;
+              try{
+                const jobProduto = new JobProduto();
+                        await jobProduto.jobgetVinculoProduct();
+
+              }catch(e){
+            console.log('[X] Ocorreu um erro ao tentar obter o vinculo dos produtos.');
+
+              }
+
+          });
+
+      }
     }
 }
