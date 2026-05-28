@@ -253,7 +253,7 @@ export class NfMapper {
                 descricao: item.PRODUTO_DESCRICAO || item.COMPLEMENTO || "",
                 unidade: item.UNID_PROD_SIGLA || item.UNIDADE || "UN",
                 quantidade: item.QUANTIDADE,
-                valor: Number(item.VALOR_UNITARIO).toFixed(2),
+                valor:  item.VALOR_UNITARIO ,
                 tipo: "P",
                 numeroPedidoCompra: String(item.CHAVE_MVTO),
                 classificacaoFiscal: item.CLASS_FISCAL_NCM || "0000.00.00",
