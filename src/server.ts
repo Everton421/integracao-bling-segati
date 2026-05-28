@@ -15,7 +15,7 @@ import { ApiConfigRepository } from './core/company/data/api-config-repository';
         app.use(bodyParser.urlencoded({ extended: true }))
         app.use(bodyParser.json())
         app.set('views', path.join(__dirname, 'web/Views'));
-        
+        app.use(express.static(path.join(__dirname, 'web', 'public')));
         app.use(express.json());    
         app.use(router)
         app.use(cors());
