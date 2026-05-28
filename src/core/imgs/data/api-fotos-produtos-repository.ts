@@ -1,4 +1,88 @@
+import { conn_api, database_api } from "../../../database/databaseConfig";
+import { fotos_produtos } from "../../../interfaces/fotos_produtos";
 
 
-export class ApiFotosProdutosRepository { 
+export class ApiFotosProdutosRepository {
+
+    static async insert(data: {
+        erp_sku: number
+        referencia: string
+        cod_barras: string
+        link: string
+        hash_sha256: string
+        nome_foto: string
+    }) {
+        return new Promise(async (resolve, reject) => {
+            const { cod_barras, erp_sku,
+                hash_sha256, link, nome_foto, referencia
+            } = data;
+            let sql = ` 
+                       INSERT INTO ${database_api}.fotos_produtos  SET  
+                        erp_sku = ? ,
+                        referencia = ? ,
+                        cod_barras = ?,
+                        link =  ? ,
+                        hash_sha256 = ?,
+                        nome_foto = ?  
+                            ON DUPLICATE KEY UPDATE 
+                                nome_foto = (nome_foto),
+                                link = (link)
+;
+                    `;
+            const values = [
+                erp_sku,
+                referencia,
+                cod_barras,
+                link,
+                hash_sha256,
+                nome_foto
+            ];
+            await conn_api.query(sql, values, (err: any, result: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+
+
+    static async getByParams(query: { erp_sku?: number, referencia?: string, nome_foto?: string }):Promise<fotos_produtos[]>{
+        return new Promise(async (resolve, reject) => {
+
+            const { erp_sku, nome_foto, referencia } = query;
+
+            let baseSql = `
+            SELECT * FROM ${database_api}.fotos_produtos 
+            `
+            const wherClause = ' WHERE  ';
+            const conditions = []
+            const values = []
+
+            if (erp_sku) {
+                conditions.push(' erp_sku = ? ');
+                values.push(erp_sku);
+            }
+            if (nome_foto) {
+                conditions.push(' nome_foto = ? ');
+                values.push(nome_foto);
+            }
+            if (referencia) {
+                conditions.push(' referencia = ? ');
+                values.push(referencia);
+            }
+
+            const finalSql = baseSql+ wherClause  + conditions.join(" AND ")  + " order by erp_sku;";
+            await conn_api.query(finalSql, values, (err: any, result: any) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+
+    }
+
 }

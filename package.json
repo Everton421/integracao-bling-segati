@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --transpile-only src/server.ts",
     "teste-naturezaoperacao": "tsx  src/core/invoices/__test__/get-natureza-operacao-request.ts",
+    "teste-foto": "tsx  src/core/imgs/__test__/get-photo.test.ts",
     "build": "tsc && shx cp -r src/web/Views dist/web/Views",
     "start": "node /dist/server.js"
   },

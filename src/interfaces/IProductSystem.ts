@@ -27,6 +27,7 @@ export interface IProductSystem  {
     DESCR_CURTA_MKTPLACE:string
     DESCR_LONGA_MKTPLACE:string
     NUM_FABRICANTE:string
+    NUM_ORIGINAL:string
     QTDE_VOL:number
 }   
 

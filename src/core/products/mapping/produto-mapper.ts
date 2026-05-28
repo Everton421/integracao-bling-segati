@@ -4,8 +4,11 @@ import { IProdutoBling } from "../../../interfaces/IProdutoBling";
 import { ProdutoRepository } from "../data/produto-repository";
 import { CategoriaApiRepository } from "../../categories/data/categoria-api-repository";
 import { VerifyGtin } from "../../../shared/utils/verify-gtin";
+import { UploadAndInsertPhotoService } from "../../imgs/services/upload-photo-service";
 
 export type IProdutoBlingSemPreco = Omit<IProdutoBling, 'preco'>
+
+type linksPhotosBling = { link:string };
 
 export class ProdutoMapper {
 
@@ -18,10 +21,9 @@ export class ProdutoMapper {
    * @param tabela codigo da tabela de preço a ser enviada 
    * @returns 
    */
- static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, tabela?: number): Promise<IProdutoBlingSemPreco> {
+ static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number): Promise<IProdutoBlingSemPreco> {
     return new Promise(async (resolve, reject) => {
 
-      const freeImgHost = new PostFreeImgHost();
       let preco: number = 0;
 
       if (sendPrice === 1) {
@@ -48,27 +50,31 @@ export class ProdutoMapper {
             if(NCM )  tributacaoBling = { ...tributacaoBling,  ncm : NCM   } ;
               
         }
-
-
  
         
       
       const arrUnidades = await ProdutoRepository.buscaUnidades(produto.CODIGO);
       const unidade = arrUnidades[0].SIGLA
 
-    
         const isValidGtin =  VerifyGtin.isValidGtin(produto.NUM_FABRICANTE);
 
       const  gtin = isValidGtin ?  produto.NUM_FABRICANTE : null;
-      
-    
+      const referencia = produto.NUM_ORIGINAL;
+
+      let links:linksPhotosBling[] | null =[];
+
+      if(referencia){
     //envio de imagen
       //let links = await imgController.postFoto( produto ) ;
-       const resultFotos = await freeImgHost.postFoto(produto) as [{ link: string }];
-      
-       let links = resultFotos && resultFotos.length ? resultFotos  : null 
-       //
+       const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia );
+       for(const photo of resultFotos ){
+         links.push({ link: photo } );
+       }
+      }else{
+        links = null
+      } 
 
+       //
 
       const post: IProdutoBling = {
         codigo: produto.CODIGO,

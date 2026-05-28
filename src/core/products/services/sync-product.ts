@@ -245,6 +245,7 @@ export class  SyncProduct{
 
                     // contem o valor do parametro de envio de estoque ( 0: nao enviar estoque, 1: enviar o estoque) 
                     const envEstoque = Number(dadosConfig[0].enviar_estoque);
+                    const caminhoFotos = dadosConfig[0].caminho_fotos;
 
                     // contem o valor do parametro de envio de preco ( 0: nao enviar preco, 1: enviar o preco) 
                     const envPreco = Number( dadosConfig[0].enviar_precos)
@@ -287,9 +288,9 @@ export class  SyncProduct{
                             categoryId = resultVerifyCategoryBling.data?.id_bling || 0;
                         }
                         
-
+                        
                     // processa o produto retornando os dados do produto de acordo com o que a api do bling esta esperando.
-                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId,  tabela_preco );
+                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminhoFotos, tabela_preco );
                     
                     await this.delay(1000);  
                     // se o produto selecionado for encontrado, faz a atualização.
