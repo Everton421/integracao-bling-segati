@@ -21,7 +21,7 @@ export class ProdutoMapper {
    * @param tabela codigo da tabela de preço a ser enviada 
    * @returns 
    */
- static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false): Promise<IProdutoBlingSemPreco> {
+ static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false, existingUrls: string[] = []): Promise<IProdutoBlingSemPreco> {
     return new Promise(async (resolve, reject) => {
 
       let preco: number = 0;
@@ -110,6 +110,12 @@ export class ProdutoMapper {
         post.midia = {
           imagens: {
             imagensURL: links as any,
+          }
+        };
+      } else if (skipPhotos && existingUrls.length > 0) {
+        post.midia = {
+          imagens: {
+            imagensURL: existingUrls.map(link => ({ link })) as any,
           }
         };
       }
