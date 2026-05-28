@@ -229,31 +229,26 @@ export class  SyncProduct{
     }
 
  
-    async checkProductHasPhotosInBling(idBling: string): Promise<{ hasPhotos: boolean, existingUrls: string[] }> {
+    async checkProductHasPhotosInBling(idBling: string): Promise<boolean> {
         try {
             await this.api.configurarApi();
             const response = await this.api.config.get(`/produtos/${idBling}`);
             const data = response.data?.data;
-            if (!data) return { hasPhotos: false, existingUrls: [] };
+            if (!data) return false;
 
-            const internas = data.midia?.imagens?.internas || [];
-            const externas = data.midia?.imagens?.externas || [];
+            const internas = data.midia?.imagens?.internas;
+            const externas = data.midia?.imagens?.externas;
 
-            const existingUrls: string[] = [];
-            for (const img of internas) {
-                if (img.link) existingUrls.push(img.link);
-            }
-            for (const img of externas) {
-                if (img.link) existingUrls.push(img.link);
-            }
+            const hasPhotos = (
+                (internas && internas.length > 0) ||
+                (externas && externas.length > 0)
+            );
 
-            const hasPhotos = existingUrls.length > 0;
-
-            console.log(`[checkProductHasPhotosInBling] Produto ${idBling} ${hasPhotos ? `possui ${existingUrls.length} foto(s)` : 'não possui fotos'} no Bling.`);
-            return { hasPhotos, existingUrls };
+            console.log(`[checkProductHasPhotosInBling] Produto ${idBling} ${hasPhotos ? 'possui' : 'não possui'} fotos no Bling.`);
+            return hasPhotos;
         } catch (error: any) {
             console.log(`[X] Erro ao verificar fotos do produto ${idBling} no Bling: ${error.message || error}`);
-            return { hasPhotos: false, existingUrls: [] };
+            return false;
         }
     }
 
@@ -452,15 +447,12 @@ export class  SyncProduct{
                         
                     // verifica se o produto já possui fotos no Bling (apenas para produtos existentes)
                     let skipPhotos = false;
-                    let existingUrls: string[] = [];
                     if (arrProdutoSincronizado.length > 0) {
-                        const result = await this.checkProductHasPhotosInBling(arrProdutoSincronizado[0].Id_bling);
-                        skipPhotos = result.hasPhotos;
-                        existingUrls = result.existingUrls;
+                        skipPhotos = await this.checkProductHasPhotosInBling(arrProdutoSincronizado[0].Id_bling);
                     }
 
                     // processa o produto retornando os dados do produto de acordo com o que a api do bling esta esperando.
-                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminhoFotos, tabela_preco, skipPhotos, existingUrls );
+                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminhoFotos, tabela_preco, skipPhotos );
                     
                     await this.delay(1000);  
                     // se o produto selecionado for encontrado, faz a atualização.
