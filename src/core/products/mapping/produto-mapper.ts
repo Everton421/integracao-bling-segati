@@ -21,7 +21,7 @@ export class ProdutoMapper {
    * @param tabela codigo da tabela de preço a ser enviada 
    * @returns 
    */
- static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number): Promise<IProdutoBlingSemPreco> {
+ static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false): Promise<IProdutoBlingSemPreco> {
     return new Promise(async (resolve, reject) => {
 
       let preco: number = 0;
@@ -61,19 +61,18 @@ export class ProdutoMapper {
       const  gtin = isValidGtin ?  produto.NUM_FABRICANTE : null;
       const referencia = produto.NUM_ORIGINAL;
 
-      let links:linksPhotosBling[] | null =[];
+      let links:linksPhotosBling[] | null = null;
 
-      if(referencia){
-    //envio de imagen
-      //let links = await imgController.postFoto( produto ) ;
-       const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia );
-       for(const photo of resultFotos ){
-         links.push({ link: photo } );
-       }
-      }else{
-        links = null
-      } 
+      let linksFotosBling = null 
 
+      if(referencia && !skipPhotos){
+        links = [];
+        const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia );
+        for(const photo of resultFotos ){
+          links.push({ link: photo } );
+        }
+      }
+        linksFotosBling = links;
        //
       const  nome = produto.TITULO_MKTPLACE ? produto.TITULO_MKTPLACE : produto.DESCRICAO;
 

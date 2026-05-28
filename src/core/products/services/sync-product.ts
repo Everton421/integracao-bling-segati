@@ -229,6 +229,29 @@ export class  SyncProduct{
     }
 
  
+    async checkProductHasPhotosInBling(idBling: string): Promise<boolean> {
+        try {
+            await this.api.configurarApi();
+            const response = await this.api.config.get(`/produtos/${idBling}`);
+            const data = response.data?.data;
+            if (!data) return false;
+
+            const internas = data.midia?.imagens?.internas;
+            const externas = data.midia?.imagens?.externas;
+
+            const hasPhotos = (
+                (internas && internas.length > 0) ||
+                (externas && externas.length > 0)
+            );
+
+            console.log(`[checkProductHasPhotosInBling] Produto ${idBling} ${hasPhotos ? 'possui' : 'não possui'} fotos no Bling.`);
+            return hasPhotos;
+        } catch (error: any) {
+            console.log(`[X] Erro ao verificar fotos do produto ${idBling} no Bling: ${error.message || error}`);
+            return false;
+        }
+    }
+
     /**
      * envia o produto para o bling.
      * @param produtoBling dados do produto a ser enviado, dados estes que precisam ser tratados antes do envio
@@ -422,8 +445,15 @@ export class  SyncProduct{
                         }
                         
                         
+                    // verifica se o produto já possui fotos no Bling (apenas para produtos existentes)
+                    let skipPhotos = false;
+                    if (arrProdutoSincronizado.length > 0) {
+                        const hasPhotos = await this.checkProductHasPhotosInBling(arrProdutoSincronizado[0].Id_bling);
+                        skipPhotos = hasPhotos;
+                    }
+
                     // processa o produto retornando os dados do produto de acordo com o que a api do bling esta esperando.
-                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminhoFotos, tabela_preco );
+                    const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminhoFotos, tabela_preco, skipPhotos );
                     
                     await this.delay(1000);  
                     // se o produto selecionado for encontrado, faz a atualização.
