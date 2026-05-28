@@ -63,8 +63,6 @@ export class ProdutoMapper {
 
       let links:linksPhotosBling[] | null = null;
 
-      let linksFotosBling = null 
-
       if(referencia && !skipPhotos){
         links = [];
         const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia );
@@ -72,8 +70,6 @@ export class ProdutoMapper {
           links.push({ link: photo } );
         }
       }
-        linksFotosBling = links;
-       //
       const  nome = produto.TITULO_MKTPLACE ? produto.TITULO_MKTPLACE : produto.DESCRICAO;
 
       const descricaoCurta = produto.DESCR_CURTA_MKTPLACE ? produto.DESCR_CURTA_MKTPLACE : produto.APLICACAO;
@@ -105,15 +101,19 @@ export class ProdutoMapper {
           },
 
         tributacao: tributacaoBling,
-        midia: {
-          imagens: {
-            imagensURL: links as any,
-          }
-        },
         categoria: {
           id: categoryIdBling
         }
       };
+
+      if (links && links.length > 0) {
+        post.midia = {
+          imagens: {
+            imagensURL: links as any,
+          }
+        };
+      }
+
       console.log(post)
       resolve(post)
     })
