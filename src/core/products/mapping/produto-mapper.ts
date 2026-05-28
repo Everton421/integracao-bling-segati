@@ -75,11 +75,14 @@ export class ProdutoMapper {
       } 
 
        //
+      const  nome = produto.TITULO_MKTPLACE ? produto.TITULO_MKTPLACE : produto.DESCRICAO;
+
+      const descricaoCurta = produto.DESCR_CURTA_MKTPLACE ? produto.DESCR_CURTA_MKTPLACE : produto.APLICACAO;
 
       const post: IProdutoBling = {
         codigo: produto.CODIGO,
-        nome: produto.DESCRICAO,
-        descricaoCurta: produto.APLICACAO,
+        nome: nome,
+        descricaoCurta: descricaoCurta,
         descricaoComplementar: produto.DESCR_LONGA_MKTPLACE || '',
         tipo: 'P',
         marca: marca,
