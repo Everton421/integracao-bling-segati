@@ -21,7 +21,8 @@ export class ProdutoEditarController{
                         const envPreco = Number( dadosConfig[0].enviar_precos)
                         // tabela onde é feita a consulta dos precos a serem enviados
                         const tabela_preco = Number( dadosConfig[0].tabela_preco);
-    
+
+                            const { caminho_fotos } = dadosConfig[0];
 
 
         const arrProduto  = await ProdutoRepository.buscaProduto(Number(codigo));
@@ -44,10 +45,9 @@ export class ProdutoEditarController{
                         }else{
                             categoryId = resultVerifyCategoryBling.data?.id_bling || 0;
                         }
-                        
 
 
-               const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId,  tabela_preco );
+               const produtoBling = await  ProdutoMapper.postProdutoMapper(prodSelected,envPreco, categoryId, caminho_fotos, tabela_preco );
             
 
              res.render('produtos/produto-editar', {  produto : produto   });

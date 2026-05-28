@@ -105,7 +105,7 @@ export class ProdutoMapper {
         tributacao: tributacaoBling,
         midia: {
           imagens: {
-            imagensURL: links,
+            imagensURL: links as any,
           }
         },
         categoria: {
