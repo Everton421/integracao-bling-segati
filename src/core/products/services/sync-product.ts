@@ -263,7 +263,12 @@ export class  SyncProduct{
                                                              console.log(response.status, "atualizando saldo !")
                                                               await this.delay(1000);  
                                                             const arrEstoque = await   ProdutoRepository.buscaEstoqueReal(produtoBling.codigo, 1 );
-                                                            const estoque = arrEstoque[0].ESTOQUE    
+                                                            
+                                                                let estoque = 0;
+                                                                if(arrEstoque.length > 0 ){
+                                                                    estoque = arrEstoque[0].ESTOQUE;
+                                                                }
+
                                                             const arrDeposito = await ProdutoApiRepository.findDefaultDeposit();
                                                                   let deposito;
                                                                 if(arrDeposito.length > 0){
@@ -306,8 +311,14 @@ export class  SyncProduct{
                         if (response.status === 200 || response.status === 201) {
 
                                             if( envEstoque > 0 ){
+
                                                      const arrEstoque = await   ProdutoRepository.buscaEstoqueReal(produtoBling.codigo , setor );
-                                                    const estoque = arrEstoque[0].ESTOQUE    
+
+                                                     let estoque = 0;
+                                                     if(arrEstoque.length > 0 ){
+                                                        estoque = arrEstoque[0].ESTOQUE;
+                                                     }
+
                                                     const arrDeposito = await ProdutoApiRepository.findDefaultDeposit();
                                                         let deposito;
                                                     if(arrDeposito.length > 0){

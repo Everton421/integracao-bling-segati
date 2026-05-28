@@ -26,8 +26,14 @@ export class NfRepository {
     async findNotasByPedido(codigoPedido: number): Promise<CadNf[]> {
         return new Promise(async (resolve, reject) => {
             const sql = `
-                SELECT * 
-                FROM ${db_vendas}.cad_nf 
+                SELECT 
+                    nf.*,
+            CAST(nf.OBSERVACOES  AS CHAR(1000)  CHARACTER SET latin1) as OBSERVACOES , 
+            CAST(nf.OBSERVACOES2  AS CHAR(1000)  CHARACTER SET latin1) as OBSERVACOES2 , 
+            CAST(nf.DADOS_ADICIONAIS  AS CHAR(1000)  CHARACTER SET latin1) as DADOS_ADICIONAIS   
+
+
+                FROM ${db_vendas}.cad_nf nf
                 WHERE PEDIDO = ${codigoPedido};
             `;
             conn.query(sql, (err, result: CadNf[]) => {

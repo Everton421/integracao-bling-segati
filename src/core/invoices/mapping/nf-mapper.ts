@@ -4,6 +4,7 @@ import { ItensNota,   } from "../data/nf-data-acess";
 import { MvtoTributos } from "../../../interfaces/mvto_tributos";
 import { CtReceb } from "../../../interfaces/ct_receb";
 import { DateService } from "../../../shared/utils/date-service";
+import { config_nfe } from "../../../interfaces/config_nfe";
 
 export interface BlingNotaFiscal {
     tipo: number;
@@ -128,6 +129,7 @@ export interface BlingDocReferenciado {
     serie: string;
     contadorOrdemOperacao?: string;
     chaveAcesso?: string;
+
 }
 
 export class NfMapper {
@@ -139,7 +141,8 @@ export class NfMapper {
         itens: ItensNota[],
         cliente: CadClie | null,
         tributaria: MvtoTributos[],
-        dadosParcelas: CtReceb[]
+        dadosParcelas: CtReceb[],
+        dadosTransacao:config_nfe 
     ): BlingNotaFiscal {
         return {
             tipo: this.mapTipoNota(dadosNota.OPERACAO),
@@ -147,7 +150,7 @@ export class NfMapper {
             dataOperacao: this.formatarData(dadosNota.DATA_EMISSAO),
             contato: this.mapContato(cliente, dadosNota),
             naturezaOperacao: {
-                id:  15110323517 
+                id: Number(dadosTransacao.id_natureza_operacao)  
             },
             loja: {
                 id: dadosNota.FILIAL,
@@ -250,7 +253,7 @@ export class NfMapper {
                 descricao: item.PRODUTO_DESCRICAO || item.COMPLEMENTO || "",
                 unidade: item.UNID_PROD_SIGLA || item.UNIDADE || "UN",
                 quantidade: item.QUANTIDADE,
-                valor: item.VALOR_UNITARIO,
+                valor: Number(item.VALOR_UNITARIO).toFixed(2),
                 tipo: "P",
                 numeroPedidoCompra: String(item.CHAVE_MVTO),
                 classificacaoFiscal: item.CLASS_FISCAL_NCM || "0000.00.00",
@@ -282,7 +285,7 @@ export class NfMapper {
         for (let i = 0; i <= dadosNota.QTDE_PARCELAS ; i++) {
             parcelas.push({
                 data: DateService.formatarData(dadosNota.DATA_EMISSAO) as any, 
-                valor: valor,
+                valor: Number(valor.toFixed(2)),
                 formaPagamento: {
                     id:  1
                 }

@@ -20,7 +20,7 @@ export class ApiConfigNfeRepository{
                          let sql =
                             ` SELECT 
                                * 
-                             FROM ${database_api}.config_nfe  ;`
+                             FROM ${database_api}.config_nfe   `
 
                                 const whereClause = " WHERE "
                             const paramsQuery = []
