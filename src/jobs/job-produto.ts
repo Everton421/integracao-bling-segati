@@ -46,6 +46,11 @@ export class JobProduto{
             console.log('[V] Processo de vinculo de produtos finalizado.');
         }
 
+        async jobSyncAllProductsFromBling(){
+            await this.syncProduct.syncAllProductsFromBling();
+        }
+
+
         private delay(ms: number) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }

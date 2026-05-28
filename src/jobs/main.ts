@@ -159,7 +159,7 @@ export  class Job{
               inExec = true;
               try{
                 const jobProduto = new JobProduto();
-                        await jobProduto.jobgetVinculoProduct();
+                        await jobProduto.jobSyncAllProductsFromBling();
 
               }catch(e){
             console.log('[X] Ocorreu um erro ao tentar obter o vinculo dos produtos.');

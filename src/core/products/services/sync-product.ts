@@ -105,7 +105,129 @@ export class  SyncProduct{
         }
     }
 
- 
+    async syncAllProductsFromBling() {
+        try {
+            await this.api.configurarApi();
+
+            const resultado = {
+                totalProcessed: 0,
+                vinculados: 0,
+                jaVinculados: 0,
+                naoEncontradosSistema: 0,
+                erros: 0,
+                detalhes: [] as string[]
+            };
+
+            let pagina = 1;
+            const limite = 100;
+            let hasMore = true;
+
+            while (hasMore) {
+                console.log(`[Buscando produtos do Bling] Página ${pagina}...`);
+
+                const response = await this.api.config.get('/produtos', {
+                    params: { pagina, limite }
+                });
+
+                await this.delay(1000);
+
+                const produtos = response.data?.data;
+
+                if (!produtos || produtos.length === 0) {
+                    hasMore = false;
+                    break;
+                }
+
+                for (const produto of produtos) {
+                    resultado.totalProcessed++;
+                    const codigo = Number(produto.codigo);
+
+                    if (!codigo) {
+                        console.log(`[X] Produto ${produto.id} não possui código do sistema.`);
+                        resultado.erros++;
+                        resultado.detalhes.push(`Produto ${produto.id} (${produto.nome}) sem código do sistema`);
+                        continue;
+                    }
+
+                    try {
+                        const produtoSistema = await ProdutoRepository.buscaProduto(codigo);
+
+                        if (!produtoSistema || produtoSistema.length === 0) {
+                            console.log(`[-] Produto código ${codigo} (${produto.nome}) não encontrado no sistema.`);
+                            resultado.naoEncontradosSistema++;
+                            resultado.detalhes.push(`Código ${codigo} (${produto.nome}) não encontrado no sistema`);
+                            continue;
+                        }
+
+                        const vinculoExistente = await ProdutoApiRepository.findByCodeSystem(codigo);
+
+                        if (vinculoExistente && vinculoExistente.length > 0) {
+                            console.log(`[~] Produto código ${codigo} já vinculado ao Bling ID ${vinculoExistente[0].Id_bling}`);
+                            resultado.jaVinculados++;
+                            continue;
+                        }
+
+                        let tipoVariacao = 'N';
+                        let comVariacao = 'N';
+
+                        if (produto.idProdutoPai && produto.formato === 'S') {
+                            tipoVariacao = 'S';
+                        }
+                        if (!produto.idProdutoPai && produto.formato === 'V') {
+                            comVariacao = 'S';
+                        }
+
+                        const produtoVinculo = {
+                            id_bling: produto.id,
+                            codigo_sistema: codigo,
+                            descricao: produto.nome,
+                            saldo: 0,
+                            variacao: tipoVariacao,
+                            com_variacao: comVariacao,
+                            data_recad_sistema: DateService.obterDataHoraAtual(),
+                            data_estoque: DateService.obterDataHoraAtual(),
+                            data_envio: DateService.obterDataHoraAtual(),
+                            data_preco: '2001-01-01 10:00:00'
+                        };
+
+                        const insertResult: any = await ProdutoApiRepository.inserir(produtoVinculo);
+                        if (insertResult && insertResult.affectedRows === 1) {
+                            resultado.vinculados++;
+                            resultado.detalhes.push(`[V] Vinculado: código ${codigo} -> Bling ID ${produto.id}`);
+                            console.log(`[V] Vinculo registrado: ${codigo} -> ${produto.id}`);
+                        }
+                    } catch (err: any) {
+                        console.log(`[X] Erro ao processar produto código ${codigo}: ${err.message || err}`);
+                        resultado.erros++;
+                        resultado.detalhes.push(`Erro no código ${codigo}: ${err.message || err}`);
+                    }
+                }
+
+                pagina++;
+            }
+
+            console.log('--- Resumo syncAllProductsFromBling ---');
+            console.log(`Total processados: ${resultado.totalProcessed}`);
+            console.log(`Vinculados: ${resultado.vinculados}`);
+            console.log(`Já vinculados: ${resultado.jaVinculados}`);
+            console.log(`Não encontrados no sistema: ${resultado.naoEncontradosSistema}`);
+            console.log(`Erros: ${resultado.erros}`);
+
+            return resultado;
+
+        } catch (error: any) {
+            console.log(`[X] Erro em syncAllProductsFromBling: ${error.message || error}`);
+            return {
+                totalProcessed: 0,
+                vinculados: 0,
+                jaVinculados: 0,
+                naoEncontradosSistema: 0,
+                erros: 0,
+                detalhes: [`Erro crítico: ${error.message || error}`]
+            };
+        }
+    }
+
  
     /**
      * envia o produto para o bling.
