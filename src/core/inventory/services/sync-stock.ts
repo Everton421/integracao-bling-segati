@@ -55,7 +55,8 @@ export class SyncStock{
                                        estoqueEnviado =  await  this.api.config.post('/estoques', estoque);
                                        status = estoqueEnviado.status
                                        if(status === 201 || status ===200){
-                                           await ProdutoApiRepository.atualizaSaldoEnviado(idProdutobling , saldo,  data_estoque );
+                                        
+                                           await ProdutoApiRepository.atualizaSaldoEnviado(idProdutobling , saldo,  DateService.formatarDataHora(data_estoque) );
                                          //  console.log(estoqueEnviado.data);    
                                            //console.log(` enviado saldo para produto: ${ codigoProdutoSistema}   saldo: ${saldo}  idBling: ${ idProdutobling } `);
                                            return { ok: true, erro:false,  msg:   ` enviado saldo para produto: ${ codigoProdutoSistema}   saldo: ${saldo}  idBling: ${ idProdutobling } `    }
