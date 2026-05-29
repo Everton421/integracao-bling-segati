@@ -28,7 +28,6 @@ export class SyncCompany{
 
                    const resultRequestDataCompany = await   this.api.config.get('/empresas/me/dados-basicos');
                    const dataCompany = resultRequestDataCompany.data as responseCompanyRequest;
-                    console.log(dataCompany);
                     return dataCompany;
                 }catch(e){  
                     if(e instanceof AxiosError){

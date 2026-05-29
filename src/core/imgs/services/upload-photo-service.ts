@@ -39,7 +39,7 @@ export class UploadAndInsertPhotoService {
     
                         if(link){
                             await ApiFotosProdutosRepository.insert({ cod_barras:'', codigo_produto_sistema: codigoProdutoSistema, hash_sha256:'', link:link, nome_foto:photoName, referencia:referenciaProduto}); 
-                        imgsFinal.push(link)
+                           imgsFinal.push(link)
                         }else{
                             continue
                         }

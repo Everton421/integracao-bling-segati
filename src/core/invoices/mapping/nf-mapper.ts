@@ -142,7 +142,8 @@ export class NfMapper {
         cliente: CadClie | null,
         tributaria: MvtoTributos[],
         dadosParcelas: CtReceb[],
-        dadosTransacao:config_nfe 
+        dadosTransacao:config_nfe ,
+        lojaId:string
     ): BlingNotaFiscal {
         return {
             tipo: this.mapTipoNota(dadosNota.OPERACAO),
@@ -153,7 +154,7 @@ export class NfMapper {
                 id: Number(dadosTransacao.id_natureza_operacao)  
             },
             loja: {
-                id: dadosNota.FILIAL,
+                id: lojaId,
                 numero: `FILIAL_${dadosNota.FILIAL}`
             },
             finalidade: 1,
@@ -163,7 +164,7 @@ export class NfMapper {
             desconto: dadosNota.DESC_PROD || 0,
             observacoes: dadosNota.OBSERVACOES,
             itens: this.mapItens(itens, tributaria),
-            parcelas: this.mapParcelas(dadosNota),
+           // parcelas: this.mapParcelas(dadosParcelas, dadosNota),
             transporte: this.mapTransporte(dadosNota)
         };
     }
@@ -276,21 +277,31 @@ export class NfMapper {
     }
 
   
-    private mapParcelas(dadosNota: CadNf ): BlingParcela[] {
-        if ( dadosNota.QTDE_PARCELAS === 0 ) return [];
+    private mapParcelas(dadosParcelas: CtReceb[],dadosNota: CadNf  ): BlingParcela[] {
 
         const parcelas: BlingParcela[] = [];
-
-            const valor = dadosNota.TOTAL_NF / dadosNota.QTDE_PARCELAS; 
-        for (let i = 0; i <= dadosNota.QTDE_PARCELAS ; i++) {
-            parcelas.push({
-                data: DateService.formatarData(dadosNota.DATA_EMISSAO) as any, 
-                valor: Number(valor.toFixed(2)),
-                formaPagamento: {
-                    id:  1
-                }
-            });
-        }
+            if(dadosParcelas.length > 0 ){
+                
+               for( const parcela of dadosParcelas){
+                 parcelas.push({
+                        data: DateService.formatarDataHora(parcela.VENCIMENTO) as any, 
+                        valor: Number(dadosNota.TOTAL_NF),
+                        formaPagamento: {
+                            id:  1
+                        }
+                    });
+               }
+           
+               
+            }else{
+                  parcelas.push({
+                        data: DateService.formatarData(dadosNota.DATA_EMISSAO) as any, 
+                        valor: Number( dadosNota.TOTAL_NF),
+                        formaPagamento: {
+                            id:  1
+                        }
+                    });
+            }
 
         return parcelas;
     }

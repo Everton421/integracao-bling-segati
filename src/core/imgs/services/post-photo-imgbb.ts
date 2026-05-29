@@ -4,7 +4,7 @@ import { DowloadImage } from "./dowload-photo-service";
 
 export class PostPhotoImgBB{
 
-  static async postIMGBB(foto: string): Promise<string> {
+  static async postIMGBB(foto: string): Promise<string | null> {
         return new Promise(async (resolve, reject) => {
             const dowloadImage = new DowloadImage();
             let base64Input = foto;
@@ -18,7 +18,7 @@ export class PostPhotoImgBB{
             const result = validateBase64(base64Input);
             if (!result.imageDetection.isImage) {
                 console.log(`Não é uma imagem. Formato detectado: ${result.imageDetection.format}`);
-                return
+                resolve(null)
             }
 
             let base64Clean = String(base64Input);

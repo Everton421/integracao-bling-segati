@@ -17,7 +17,7 @@ import { SyncStock } from "../core/inventory/services/sync-stock";
 import { SyncProduct } from "../core/products/services/sync-product";
 // import { testeNf } from "../__test__/teste-nf";
 // import { testeNaturezaOperacao } from "../__test__/teste-natureza-operacao";
-import { SyncCompany } from "../core/company/services/sync-company";
+import { SyncCompany } from "../core/company/services/company-request";
 import { ProdutoEditarController } from "../core/products/controller/produto-editar-controller";
 
 const router = Router();

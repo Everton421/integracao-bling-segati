@@ -5,11 +5,12 @@ import { SyncNf } from '../services/http-request-nf';
 test.it("",async ()=>{
 
     try{
-    const dadosNfMapped = await    montarNf.exec(8895227);
+    const dadosNfMapped = await    montarNf.exec(8895319);
 
         const syncNf = new SyncNf();
 
-        await syncNf.postNf(dadosNfMapped)
+       const result = await syncNf.postNf(dadosNfMapped)
+        console.log(result)
     }catch(e){
         console.log(e)
     }

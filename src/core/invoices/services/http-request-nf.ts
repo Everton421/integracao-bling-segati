@@ -9,6 +9,26 @@ export class SyncNf {
     async postNf( nfBling :BlingNotaFiscal){
         await this.api.configurarApi();
 
+        console.log('=== DEBUG http-request-nf ===');
+        console.log('Parcelas enviadas:', JSON.stringify(nfBling.parcelas, null, 2));
+        console.log('Seguro:', nfBling.seguro);
+        console.log('Despesas:', nfBling.despesas);
+        console.log('Desconto:', nfBling.desconto);
+        console.log('Transporte:', JSON.stringify(nfBling.transporte, null, 2));
+        const sumItemVal = nfBling.itens.reduce((s, i) => s + (i.valor * i.quantidade), 0);
+        console.log('Soma itens (valor * qtd):', sumItemVal);
+        const sumParcelas = nfBling.parcelas?.reduce((s, p) => s + p.valor, 0) || 0;
+        console.log('Soma parcelas:', sumParcelas);
+        const totalCalculado = Number((
+            sumItemVal
+            + (nfBling.seguro || 0)
+            + (nfBling.despesas || 0)
+            - (nfBling.desconto || 0)
+            + (nfBling.transporte?.freight || 0)
+        ).toFixed(2));
+        console.log('Total calculado (items+seguro+despesas-desconto+frete):', totalCalculado);
+        console.log('==============================');
+
         try{
 
                   const response = await this.api.config.post('/nfe', nfBling);
