@@ -154,7 +154,7 @@ export class NfMapper {
                 id: Number(dadosTransacao.id_natureza_operacao)  
             },
             loja: {
-                id: lojaId,
+                id: lojaId as any,
                 numero: `FILIAL_${dadosNota.FILIAL}`
             },
             finalidade: 1,
