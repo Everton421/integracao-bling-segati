@@ -1,5 +1,5 @@
 import { ApiFotosProdutosRepository } from "../data/api-fotos-produtos-repository";
-import { getPhotosFolder } from "./get-photos-folder";
+import { getPhotosFolder } from "../utils/get-photos-folder";
 import { PostPhotoImgBB } from "./post-photo-imgbb";
 import fs from 'node:fs/promises';
 import path from "node:path";

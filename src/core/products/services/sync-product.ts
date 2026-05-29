@@ -1,15 +1,14 @@
-import { IResponseErrorApi } from "../../../interfaces/IResponseErrorApi";
-import { IProdutoBlingSemPreco, ProdutoMapper } from "../mapping/produto-mapper";
 import { IProductSystem } from "../../../interfaces/IProductSystem";
+import { IResponseErrorApi } from "../../../interfaces/IResponseErrorApi";
 import ConfigApi from "../../../shared/api";
 import { DateService } from "../../../shared/utils/date-service";
-import { SyncPrice } from "../../prices/services/sync-price";
-import { SyncStock } from "../../inventory/services/sync-stock";
-import { ApiConfigRepository } from "../../company/data/api-config-repository";
 import { SyncCategory } from "../../categories/services/sync-category";
-import { ProdutoRepository } from "../data/produto-repository";
+import { ApiConfigRepository } from "../../company/data/api-config-repository";
+import { SyncStock } from "../../inventory/services/sync-stock";
+import { SyncPrice } from "../../prices/services/sync-price";
 import { ProdutoApiRepository } from "../data/produto-api-repository";
-import { CategoriaApiRepository } from "../../categories/data/categoria-api-repository";
+import { ProdutoRepository } from "../data/produto-repository";
+import { IProdutoBlingSemPreco, ProdutoMapper } from "../mapping/produto-mapper";
 
 type dados = {
     codigo:number,
@@ -19,8 +18,6 @@ type dados = {
 export class  SyncProduct{
          
          private   api = new ConfigApi();
-       
-    
          
          private syncStock = new SyncStock();
          private syncPrice = new SyncPrice();

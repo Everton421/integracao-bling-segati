@@ -1,5 +1,4 @@
 import { IProductSystem } from "../../../interfaces/IProductSystem";
-import { PostFreeImgHost } from "../../imgs/services/post-img-service";
 import { IProdutoBling } from "../../../interfaces/IProdutoBling";
 import { ProdutoRepository } from "../data/produto-repository";
 import { CategoriaApiRepository } from "../../categories/data/categoria-api-repository";
@@ -21,7 +20,7 @@ export class ProdutoMapper {
    * @param tabela codigo da tabela de preço a ser enviada 
    * @returns 
    */
- static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false): Promise<IProdutoBlingSemPreco> {
+ static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false): Promise<IProdutoBling> {
     return new Promise(async (resolve, reject) => {
 
       let preco: number = 0;
@@ -52,9 +51,12 @@ export class ProdutoMapper {
         }
  
         
+      let unidade = 'UND' 
       
       const arrUnidades = await ProdutoRepository.buscaUnidades(produto.CODIGO);
-      const unidade = arrUnidades[0].SIGLA
+        if(arrUnidades.length > 0 && arrUnidades[0].SIGLA ){
+          unidade = arrUnidades[0].SIGLA
+        }
 
         const isValidGtin =  VerifyGtin.isValidGtin(produto.NUM_FABRICANTE);
 
