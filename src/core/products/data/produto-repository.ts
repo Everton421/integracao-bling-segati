@@ -7,12 +7,15 @@ type prodPreco = {
 
 export class ProdutoRepository{
 
+    /***
+     * consulta os produtos disponiveis para vinculo com o Bling.
+     */
     static async buscaProdutos():Promise<IProductSystem[]>{
 
         return new Promise( async (resolve, reject)=>{
           
             let sql = ` 
-                            SELECT * FROM ${db_publico}.cad_prod WHERE NO_SITE = 'S';
+                            SELECT * FROM ${db_publico}.cad_prod WHERE NO_SITE = 'S' AND ATIVO = 'S';
                             `;
             await conn.query(sql, (err:any,result:any)=>{
               if(err){
@@ -35,7 +38,7 @@ export class ProdutoRepository{
 
                 CAST( APLICACAO AS CHAR(10000) CHARACTER SET latin1) AS APLICACAO 
 
-           FROM ${db_publico}.cad_prod WHERE NO_SITE = 'S' AND CODIGO = ${codigo};`;
+           FROM ${db_publico}.cad_prod WHERE NO_SITE = 'S' AND CODIGO = ${codigo} AND ATIVO = 'S' ;`;
           
            await conn.query(sql, async (err:any,result:IProductSystem[])=>{
             if(err){

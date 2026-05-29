@@ -5,7 +5,7 @@ import { fotos_produtos } from "../../../interfaces/fotos_produtos";
 export class ApiFotosProdutosRepository {
 
     static async insert(data: {
-        erp_sku: number
+        codigo_produto_sistema: number
         referencia: string
         cod_barras: string
         link: string
@@ -13,12 +13,12 @@ export class ApiFotosProdutosRepository {
         nome_foto: string
     }) {
         return new Promise(async (resolve, reject) => {
-            const { cod_barras, erp_sku,
+            const { cod_barras, codigo_produto_sistema,
                 hash_sha256, link, nome_foto, referencia
             } = data;
             let sql = ` 
                        INSERT INTO ${database_api}.fotos_produtos  SET  
-                        erp_sku = ? ,
+                        codigo_produto_sistema = ? ,
                         referencia = ? ,
                         cod_barras = ?,
                         link =  ? ,
@@ -30,7 +30,7 @@ export class ApiFotosProdutosRepository {
 ;
                     `;
             const values = [
-                erp_sku,
+                codigo_produto_sistema,
                 referencia,
                 cod_barras,
                 link,
@@ -48,10 +48,10 @@ export class ApiFotosProdutosRepository {
     }
 
 
-    static async getByParams(query: { erp_sku?: number, referencia?: string, nome_foto?: string }):Promise<fotos_produtos[]>{
+    static async getByParams(query: { codigo_produto_sistema?: number, referencia?: string, nome_foto?: string }):Promise<fotos_produtos[]>{
         return new Promise(async (resolve, reject) => {
 
-            const { erp_sku, nome_foto, referencia } = query;
+            const { codigo_produto_sistema, nome_foto, referencia } = query;
 
             let baseSql = `
             SELECT * FROM ${database_api}.fotos_produtos 
@@ -60,9 +60,9 @@ export class ApiFotosProdutosRepository {
             const conditions = []
             const values = []
 
-            if (erp_sku) {
-                conditions.push(' erp_sku = ? ');
-                values.push(erp_sku);
+            if (codigo_produto_sistema) {
+                conditions.push(' codigo_produto_sistema = ? ');
+                values.push(codigo_produto_sistema);
             }
             if (nome_foto) {
                 conditions.push(' nome_foto = ? ');
@@ -73,7 +73,7 @@ export class ApiFotosProdutosRepository {
                 values.push(referencia);
             }
 
-            const finalSql = baseSql+ wherClause  + conditions.join(" AND ")  + " order by erp_sku;";
+            const finalSql = baseSql+ wherClause  + conditions.join(" AND ")  + " order by codigo_produto_sistema;";
             await conn_api.query(finalSql, values, (err: any, result: any) => {
                 if (err) {
                     reject(err);

@@ -1,6 +1,6 @@
 export interface fotos_produtos {
 id:number
-erp_sku:number
+codigo_produto_sistema:number
 referencia:string
 cod_barras:string
 link:string

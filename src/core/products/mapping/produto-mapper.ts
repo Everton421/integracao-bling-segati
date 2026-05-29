@@ -63,9 +63,13 @@ export class ProdutoMapper {
 
       let links:linksPhotosBling[] | null = null;
 
-      if(referencia && !skipPhotos){
+      console.log("skipPhotos: ", skipPhotos)
+      
+      //if(referencia && !skipPhotos){
+
+       if(referencia  ){
         links = [];
-        const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia );
+        const resultFotos  = await UploadAndInsertPhotoService.exec(caminhoFotos,referencia, produto.CODIGO );
         for(const photo of resultFotos ){
           links.push({ link: photo } );
         }
@@ -112,9 +116,8 @@ export class ProdutoMapper {
             imagensURL: links as any,
           }
         };
-      }
+      } 
 
-      console.log(post)
       resolve(post)
     })
   }

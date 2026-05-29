@@ -239,9 +239,10 @@ export class  SyncProduct{
             const internas = data.midia?.imagens?.internas;
             const externas = data.midia?.imagens?.externas;
 
+            console.log(`internas `+  internas[0] )
+            console.log(`externas   `+ externas)
             const hasPhotos = (
-                (internas && internas.length > 0) ||
-                (externas && externas.length > 0)
+                (internas && internas.length > 0) ||  (externas && externas.length > 0)
             );
 
             console.log(`[checkProductHasPhotosInBling] Produto ${idBling} ${hasPhotos ? 'possui' : 'não possui'} fotos no Bling.`);
@@ -390,6 +391,78 @@ export class  SyncProduct{
 
     }
 
+    /**
+     * 
+     * @param idProdutobling id do produto do bling 
+     * @param produtoBling dados do produto a ser enviado, dados estes que precisam ser tratados antes do envio
+     * @param enviEstoque parametro que informa se é necessario enviar o estoque ( 0: nao , 1:sim )
+     * @param envPreco parametro que indica se é necessario enviar o preco do produto ( 0: nao , 1:sim )
+     * @param tabela_preco tabela de preco para atualizar os precos
+     * @returns 
+     */
+    async patchProduto(idProdutobling:any, produtoBling:IProdutoBlingSemPreco, envEstoque:number, envPreco:number, tabela_preco:number, setor:number ){
+                    let partialMsg = '';
+              try {
+                        const response = await this.api.config.put(`/produtos/${idProdutobling}`, produtoBling);
+
+                        if (response.status === 200 || response.status === 201) {
+
+                                            if( envEstoque > 0 ){
+
+                                                     const arrEstoque = await   ProdutoRepository.buscaEstoqueReal(produtoBling.codigo , setor );
+
+                                                     let estoque = 0;
+                                                     if(arrEstoque.length > 0 ){
+                                                        estoque = arrEstoque[0].ESTOQUE;
+                                                     }
+
+                                                    const arrDeposito = await ProdutoApiRepository.findDefaultDeposit();
+                                                        let deposito;
+                                                    if(arrDeposito.length > 0){
+                                                          deposito = arrDeposito[0].Id_bling
+
+                                                    }else{
+                                                            deposito = await this.syncStock.getDeposit();
+                                                    }
+                                                        await this.syncStock.postEstoque( idProdutobling, estoque,  deposito, produtoBling.codigo, DateService.obterDataHoraAtual() )
+                                                  }
+                                              if( envPreco > 0 ){
+                                                    await this.syncPrice.postPrice(idProdutobling, produtoBling.codigo, tabela_preco)
+                                                  }
+
+                            try {
+                                let resultUpdate = await ProdutoApiRepository.updateByParama({
+                                    id_bling:  idProdutobling,
+                                    data_envio: DateService.obterDataHoraAtual(),
+                                    descricao: produtoBling.nome
+                                });
+                                if(  resultUpdate && resultUpdate.affectedRows > 0 ){
+                                        partialMsg = partialMsg + ` produto ${ produtoBling.nome} alterado com sucesso no bling `;
+                                    return    {  status: response.status ,msg: partialMsg}  
+
+                                }
+                                
+
+                            } catch (e: any) {
+                                console.log("erro ao atualizar o produto no banco de dados da integração ", e);
+                                        partialMsg = partialMsg + ` erro ao atualizar o produto no banco de dados da integração`;
+                                return    {  status: 400 ,msg: partialMsg}  
+                            }
+                        } else {
+                                        partialMsg = partialMsg +` Resposta inesperada (${response?.status}) ao tentar atualizar o produto no Bling. `;
+
+                                    return    {  status: response ,msg:partialMsg  }  
+                            }
+                    } catch (err: IResponseErrorApi | any) {
+                        const errorData = err.response?.data?.error.description;
+                      console.log("Ocoreu um erro ao tentar atualizar  o produto no bling ",err)
+                        console.log(err.response?.data?.error);
+                                        partialMsg = partialMsg +` Resposta inesperada (${err?.status}) ao tentar atualizar o produto ${ produtoBling.nome} no Bling. `;
+                      return    {  status: err.response?.status ,msg: partialMsg}  
+                    
+                    }
+
+    }
 
     async postOrPutProductBling(codigoStr: number, validDateUpdate: boolean ){
 
@@ -466,7 +539,7 @@ export class  SyncProduct{
 
                              if( new Date(prodSelected.DATA_RECAD) > new Date(produtoSincronizado.data_envio) ){
                                     await this.delay(1000);  
-                                     const responsePutProduto = await this.putProduto( produtoSincronizado.Id_bling  ,produtoBling, envEstoque,  envPreco, tabela_preco, setor);  
+                                     const responsePutProduto = await this.patchProduto( produtoSincronizado.Id_bling  ,produtoBling, envEstoque,  envPreco, tabela_preco, setor);  
                                     resultadoOperacao = { codigo: codigoSelecionado, ...responsePutProduto }; 
                                 }else{
                              resultadoOperacao = { codigo: codigoStr, success: false,
@@ -475,7 +548,7 @@ export class  SyncProduct{
                                 }
                             }else{
                                  await this.delay(1000);  
-                                    const responsePutProduto = await this.putProduto( produtoSincronizado.Id_bling  ,produtoBling, envEstoque,  envPreco, tabela_preco, setor);  
+                                    const responsePutProduto = await this.patchProduto( produtoSincronizado.Id_bling  ,produtoBling, envEstoque,  envPreco, tabela_preco, setor);  
                                     resultadoOperacao = { codigo: codigoSelecionado, ...responsePutProduto }; 
                                     
                             }

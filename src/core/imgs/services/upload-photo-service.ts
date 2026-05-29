@@ -3,12 +3,14 @@ import { getPhotosFolder } from "./get-photos-folder";
 import { PostPhotoImgBB } from "./post-photo-imgbb";
 import fs from 'node:fs/promises';
 import path from "node:path";
+
+
  /**
   * Faz o upload ad foto e insere no banco de dados, é feita uma validação para nao enviar a foto para o rosto duas ou mais vezes.
   */
 export class UploadAndInsertPhotoService {
 
-    static async exec (diretorioFotos:string, referenciaProduto:string){
+    static async exec (diretorioFotos:string, referenciaProduto:string, codigoProdutoSistema:number){
 
         const photos = await getPhotosFolder.listImages(referenciaProduto, diretorioFotos);
 
@@ -36,7 +38,7 @@ export class UploadAndInsertPhotoService {
                         const link = await   PostPhotoImgBB.postIMGBB(imageBase64);
     
                         if(link){
-                            await ApiFotosProdutosRepository.insert({ cod_barras:'', erp_sku:1, hash_sha256:'', link:link, nome_foto:photoName, referencia:referenciaProduto}); 
+                            await ApiFotosProdutosRepository.insert({ cod_barras:'', codigo_produto_sistema: codigoProdutoSistema, hash_sha256:'', link:link, nome_foto:photoName, referencia:referenciaProduto}); 
                         imgsFinal.push(link)
                         }else{
                             continue
