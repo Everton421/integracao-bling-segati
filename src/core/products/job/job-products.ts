@@ -6,7 +6,7 @@ import { SyncProduct } from "../services/sync-product";
 export class JobProducts{
  
     static   async jobPostOrUpdateAllProducts(){
-        const allProducts = await ProdutoRepository.buscaProduto(16102);
+        const allProducts = await ProdutoRepository.buscaProdutos();
 
         let dadosConfig = await ApiConfigRepository.buscaConfig();
         
@@ -17,7 +17,7 @@ export class JobProducts{
             let processados = 1;
 
             if(allProducts.length > 0 ){
-                console.log(`[V] ${allProducts.length} produtos encontrados...`)
+                console.log(` ${allProducts.length} produtos encontrados...`)
 
                 for(const product of allProducts){
                     const resultService = await syncproductService.postOrPutProductBling( product.CODIGO, false) 
