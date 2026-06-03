@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { ApiFotosProdutosRepository } from "../data/api-fotos-produtos-repository";
 import { getPhotosFolder } from "../utils/get-photos-folder";
 import { PostPhotoImgBB } from "./post-photo-imgbb";
@@ -47,6 +48,10 @@ export class UploadAndInsertPhotoService {
 
                 } catch (err) {
                     console.error(`Erro ao ler o arquivo ${photoName}:`, err);
+
+                    if(isAxiosError(err)){
+                        console.log(err.response?.data?.error || err.response?.data)
+                    }
                 }
             }
         } else {

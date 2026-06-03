@@ -22,7 +22,6 @@ export class  SyncProduct{
          private syncStock = new SyncStock();
          private syncPrice = new SyncPrice();
      
-       
          
         constructor(){
             ProdutoRepository

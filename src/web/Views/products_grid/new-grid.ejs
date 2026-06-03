@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Grade - Produtos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <style>
+        .form-label { font-weight: 500; }
+        .variant-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .variant-tag .btn-close {
+            font-size: 0.7rem;
+        }
+        .variant-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 46px;
+        }
+        .variant-list-empty {
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+    <p class="text-light mt-2">Processando, por favor aguarde...</p>
+</div>
+
+<body>
+    <%- include('../components/navbar', { activePage: 'home' }) %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../components/sidebar', { activePage: 'home' }) %>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Nova Grade</h1>
+                </div>
+
+                <!-- Card 1: Produto de Referência -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <span data-feather="package" class="me-1"></span>
+                        Produto de Referência (Pai)
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-6">
+                                <label for="productReference" class="form-label">Selecione o produto que será o pai da grade:</label>
+                                <select id="productReference" class="form-select">
+                                    <option value="">Selecione um produto...</option>
+                                    <% productsReference.forEach(p => { %>
+                                        <option value="<%= p.CODIGO %>"><%= p.CODIGO %> - <%= p.DESCRICAO %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button id="loadProductBtn" class="btn btn-primary" disabled>
+                                    <span data-feather="search"></span> Carregar Dados
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Dados do Produto Pai -->
+                <div class="card mb-4" id="parentDataCard" style="display:none;">
+                    <div class="card-header">
+                        <span data-feather="edit" class="me-1"></span>
+                        Dados do Produto Pai
+                        <span class="text-muted small fw-normal ms-2">(campos editáveis)</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Código</label>
+                                <input type="text" class="form-control" id="inputCodigo" readonly>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="inputNome">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Descrição Curta</label>
+                                <input type="text" class="form-control" id="inputDescricaoCurta">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Unidade</label>
+                                <input type="text" class="form-control" id="inputUnidade">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição Complementar</label>
+                            <textarea class="form-control" id="inputDescricaoComplementar" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Situação</label>
+                                <select class="form-select" id="inputSituacao">
+                                    <option value="A">Ativo</option>
+                                    <option value="I">Inativo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Tipo</label>
+                                <select class="form-select" id="inputTipo">
+                                    <option value="P">Produto</option>
+                                    <option value="S">Serviço</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Tipo Produção</label>
+                                <select class="form-select" id="inputTipoProducao">
+                                    <option value="T">Terceiros</option>
+                                    <option value="P">Própria</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Formato</label>
+                                <input type="text" class="form-control" id="inputFormato" readonly value="V">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Marca</label>
+                                <input type="text" class="form-control" id="inputMarca">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">GTIN</label>
+                                <input type="text" class="form-control" id="inputGtin">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">NCM</label>
+                                <input type="text" class="form-control" id="inputNcm">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Preço (R$)</label>
+                                <input type="number" step="0.01" class="form-control" id="inputPreco">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Peso Bruto (kg)</label>
+                                <input type="number" step="0.001" class="form-control" id="inputPeso">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">Largura (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="inputLargura">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">Altura (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="inputAltura">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">Profundidade (cm)</label>
+                                <input type="number" step="0.01" class="form-control" id="inputProfundidade">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Volumes</label>
+                                <input type="number" class="form-control" id="inputVolumes">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Variações -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <span data-feather="layers" class="me-1"></span>
+                        Variações da Grade
+                        <span class="badge bg-secondary ms-2" id="variantsBadge">0</span>
+                    </div>
+                    <div class="card-body">
+                        <button id="addVariantBtn" class="btn btn-outline-primary mb-3" disabled>
+                            <span data-feather="plus-circle"></span> Vincular Variante
+                        </button>
+
+                        <div id="variantsList" class="variant-list">
+                            <span class="variant-list-empty" id="variantsEmpty">Nenhuma variação vinculada. Clique em "Vincular Variante" para adicionar.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons d-flex gap-2 mb-4">
+                    <button id="createGridBtn" class="btn btn-primary btn-lg" disabled>
+                        <span data-feather="grid"></span>
+                        Criar Grade no Bling
+                    </button>
+                    <a href="/produtosGrade" class="btn btn-outline-secondary btn-lg">
+                        Cancelar
+                    </a>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Vincular Variante -->
+    <div class="modal fade" id="variantModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Selecionar Variante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="modalVariantSearch" class="form-control mb-3" placeholder="Buscar produto por código ou descrição...">
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-dark" style="position: sticky; top: 0;">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th style="width: 100px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalVariantsBody">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Carregando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script>
+        feather.replace();
+
+        let selectedVariants = [];
+        let modalProducts = [];
+        let currentReference = '';
+
+        // ====== Variants List ======
+
+        function renderVariantsList() {
+            const $list = $('#variantsList');
+            const $badge = $('#variantsBadge');
+            const $empty = $('#variantsEmpty');
+
+            $badge.text(selectedVariants.length);
+
+            $empty.hide();
+            $list.find('.variant-tag').remove();
+
+            if (selectedVariants.length === 0) {
+                $empty.show();
+                return;
+            }
+
+            selectedVariants.forEach(function(v) {
+                $list.append(`
+                    <span class="variant-tag" data-codigo="${v.codigo}">
+                        ${v.codigo} - ${v.descricao}
+                        <button type="button" class="btn-close variant-remove" aria-label="Remover"></button>
+                    </span>
+                `);
+            });
+        }
+
+        $(document).on('click', '.variant-remove', function() {
+            const codigo = Number($(this).closest('.variant-tag').data('codigo'));
+            selectedVariants = selectedVariants.filter(function(v) { return v.codigo !== codigo; });
+            renderVariantsList();
+            checkCanSubmit();
+        });
+
+        // ====== Load Product Detail ======
+
+        function loadProductDetail(codigo) {
+            const $card = $('#parentDataCard');
+            const $btn = $('#loadProductBtn');
+            const $overlay = $('#loadingOverlay');
+
+            $overlay.css('display', 'flex');
+
+            $.getJSON('/api/produtosGrade/product-detail', { codigo: codigo })
+                .done(function(response) {
+                    if (response.success) {
+                        const d = response.data;
+                        $('#inputCodigo').val(d.codigo);
+                        $('#inputNome').val(d.nome);
+                        $('#inputDescricaoCurta').val(d.descricaoCurta);
+                        $('#inputDescricaoComplementar').val(d.descricaoComplementar);
+                        $('#inputSituacao').val(d.situacao);
+                        $('#inputTipo').val(d.tipo);
+                        $('#inputTipoProducao').val(d.tipoProducao);
+                        $('#inputFormato').val(d.formato);
+                        $('#inputMarca').val(d.marca);
+                        $('#inputGtin').val(d.gtin);
+                        $('#inputNcm').val(d.ncm);
+                        $('#inputPreco').val(d.preco);
+                        $('#inputPeso').val(d.pesoBruto);
+                        $('#inputLargura').val(d.largura);
+                        $('#inputAltura').val(d.altura);
+                        $('#inputProfundidade').val(d.profundidade);
+                        $('#inputUnidade').val(d.unidade);
+                        $('#inputVolumes').val(d.volumes);
+                        $card.show();
+                        feather.replace();
+                    } else {
+                        alert('Erro ao carregar dados: ' + response.error);
+                    }
+                })
+                .fail(function(xhr) {
+                    alert('Erro de conexão ao carregar dados do produto.');
+                    console.error(xhr.responseJSON || xhr.responseText);
+                })
+                .always(function() {
+                    $overlay.hide();
+                });
+        }
+
+        // ====== Modal: Load and Search Variants ======
+
+        function loadModalVariants() {
+            const $tbody = $('#modalVariantsBody');
+            $tbody.html('<tr><td colspan="3" class="text-center text-muted">Carregando...</td></tr>');
+
+            const alreadySelected = selectedVariants.map(function(v) { return v.codigo; });
+
+            $.getJSON('/api/produtosGrade/variants', { reference: currentReference })
+                .done(function(response) {
+                    if (response.success) {
+                        modalProducts = response.data.filter(function(p) {
+                            return alreadySelected.indexOf(p.CODIGO) === -1;
+                        });
+                        renderModalTable(modalProducts);
+                    } else {
+                        $tbody.html('<tr><td colspan="3" class="text-center text-danger">Erro ao carregar produtos.</td></tr>');
+                    }
+                })
+                .fail(function() {
+                    $tbody.html('<tr><td colspan="3" class="text-center text-danger">Erro de conexão.</td></tr>');
+                });
+        }
+
+        function renderModalTable(products) {
+            const $tbody = $('#modalVariantsBody');
+            if (products.length === 0) {
+                $tbody.html('<tr><td colspan="3" class="text-center text-muted">Nenhum produto disponível.</td></tr>');
+                return;
+            }
+            $tbody.html(products.map(function(p) {
+                return `
+                    <tr>
+                        <td>${p.CODIGO}</td>
+                        <td>${p.DESCRICAO}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-success select-variant-btn"
+                                data-codigo="${p.CODIGO}" data-descricao="${p.DESCRICAO}">
+                                Selecionar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join(''));
+        }
+
+        function filterModalTable() {
+            const term = $('#modalVariantSearch').val().toLowerCase();
+            const filtered = modalProducts.filter(function(p) {
+                return String(p.CODIGO).includes(term) || p.DESCRICAO.toLowerCase().includes(term);
+            });
+            renderModalTable(filtered);
+        }
+
+        // ====== Submit ======
+
+        function getParentData() {
+            return {
+                codigo: Number($('#inputCodigo').val()),
+                nome: $('#inputNome').val(),
+                descricaoCurta: $('#inputDescricaoCurta').val(),
+                descricaoComplementar: $('#inputDescricaoComplementar').val(),
+                situacao: $('#inputSituacao').val(),
+                tipo: $('#inputTipo').val(),
+                tipoProducao: $('#inputTipoProducao').val(),
+                formato: $('#inputFormato').val(),
+                unidade: $('#inputUnidade').val(),
+                marca: $('#inputMarca').val(),
+                gtin: $('#inputGtin').val(),
+                ncm: $('#inputNcm').val(),
+                preco: Number($('#inputPreco').val()) || 0,
+                pesoBruto: Number($('#inputPeso').val()) || 0,
+                largura: Number($('#inputLargura').val()) || 0,
+                altura: Number($('#inputAltura').val()) || 0,
+                profundidade: Number($('#inputProfundidade').val()) || 0,
+                volumes: Number($('#inputVolumes').val()) || 0,
+            };
+        }
+
+        function checkCanSubmit() {
+            const hasReference = currentReference !== '';
+            const hasVariants = selectedVariants.length > 0;
+            $('#createGridBtn').prop('disabled', !(hasReference && hasVariants));
+            $('#addVariantBtn').prop('disabled', !hasReference);
+        }
+
+        // ====== Event Handlers ======
+
+        $(document).ready(function() {
+            // Reference product change
+            $('#productReference').on('change', function() {
+                const val = $(this).val();
+                $('#loadProductBtn').prop('disabled', !val);
+                $('#parentDataCard').hide();
+            });
+
+            // Load product data
+            $('#loadProductBtn').on('click', function() {
+                const codigo = $('#productReference').val();
+                if (!codigo) return;
+
+                currentReference = codigo;
+                selectedVariants = [];
+                renderVariantsList();
+
+                loadProductDetail(codigo);
+                checkCanSubmit();
+            });
+
+            // Open variant modal
+            $('#addVariantBtn').on('click', function() {
+                if (!currentReference) return;
+                $('#modalVariantSearch').val('');
+                loadModalVariants();
+                var modal = new bootstrap.Modal('#variantModal');
+                modal.show();
+            });
+
+            // Search in modal
+            $('#modalVariantSearch').on('keyup', function() {
+                filterModalTable();
+            });
+
+            // Select variant from modal
+            $(document).on('click', '.select-variant-btn', function() {
+                const codigo = Number($(this).data('codigo'));
+                const descricao = $(this).data('descricao');
+
+                selectedVariants.push({ codigo: codigo, descricao: descricao });
+                renderVariantsList();
+                checkCanSubmit();
+
+                var modalEl = document.getElementById('variantModal');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            });
+
+            // Re-filter modal when it opens
+            $('#variantModal').on('shown.bs.modal', function() {
+                $('#modalVariantSearch').trigger('focus');
+            });
+
+            // Submit
+            $('#createGridBtn').on('click', function() {
+                if (!currentReference) {
+                    alert('Selecione um produto de referência.');
+                    return;
+                }
+                if (selectedVariants.length === 0) {
+                    alert('Selecione pelo menos uma variação.');
+                    return;
+                }
+
+                if (!confirm('Criar grade com ' + selectedVariants.length + ' variação(ões) no Bling?')) {
+                    return;
+                }
+
+                const $btn = $(this);
+                const $overlay = $('#loadingOverlay');
+                $overlay.css('display', 'flex');
+                $btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '/api/produtosGrade',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        reference: Number(currentReference),
+                        parentData: getParentData(),
+                        variants: selectedVariants.map(function(v) { return v.codigo; })
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(response) {
+                        alert(response.message || 'Grade criada com sucesso!');
+                        window.location.href = '/produtosGrade';
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.error || 'Erro ao criar grade.';
+                        alert('Erro: ' + msg);
+                        console.error('Erro ao criar grade:', xhr.responseJSON || xhr.responseText);
+                    },
+                    complete: function() {
+                        $overlay.hide();
+                        $btn.prop('disabled', false);
+                        feather.replace();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

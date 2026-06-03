@@ -19,6 +19,7 @@ import { SyncProduct } from "../core/products/services/sync-product";
 // import { testeNaturezaOperacao } from "../__test__/teste-natureza-operacao";
 import { SyncCompany } from "../core/company/services/company-request";
 import { ProdutoEditarController } from "../core/products/controller/produto-editar-controller";
+import { ProductGridController } from "../core/products_grid/controller/product-grid-controller";
 
 const router = Router();
 
@@ -57,6 +58,20 @@ router.post('/api/produtos', verificaToken, async (req: Request, res: Response) 
       await obj.geraVinculo(req, res);
    }
 })
+
+
+
+router.get('/produtosGrade', verificaToken, new ProductGridController().allGrids);
+
+router.get('/produtosGrade/novo', verificaToken, new ProductGridController().newGrid);
+
+router.get('/api/produtosGrade/variants', verificaToken, new ProductGridController().getVariants);
+
+router.get('/api/produtosGrade/product-detail', verificaToken, new ProductGridController().getProductDetail);
+
+router.post('/api/produtosGrade', verificaToken, new ProductGridController().postGrid);
+                     
+
 
 
 router.get('/categorias', verificaToken, async (req, res) => {

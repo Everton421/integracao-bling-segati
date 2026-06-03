@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos Sincronizados</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Feather Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"></script>
+    <!-- jQuery (NECESSÁRIO PARA O SCRIPT ABAIXO) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <style>
+        .table th {
+            white-space: nowrap;
+        }
+        .price-column {
+            text-align: right;
+        }
+        .stock-column {
+            text-align: center;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        /* Estilo para a linha de "nenhum resultado" */
+        .no-results {
+            text-align: center;
+            font-style: italic;
+            color: #6c757d; /* Cor secundária do Bootstrap */
+        }
+    </style>
+</head>
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+    <p class="text-light mt-2">Processando, por favor aguarde...</p>
+</div>
+<body>
+   <%- include('../components/navbar', { activePage: 'home' }) %>
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <%#
+              Se tiver uma sidebar:
+              <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                  <!-- Conteúdo da Sidebar -->
+              </nav>
+            %>
+   <%- include('../components/sidebar', { activePage: 'home' }) %>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Lista de Grades</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
+                            <span data-feather="refresh-cw"></span>
+                            Atualizar Lista
+                        </button>
+                    </div>
+                </div> 
+                  
+                      <div class="action-buttons">
+                            <button type="submit" class="btn btn-primary"  >
+                                <a href="/produtosGrade/novo" style="text-decoration: none; color: #FFF;" >
+                                  <span data-feather="plus-circle"></span>
+                                  Montar Grade
+                                </a>
+                            </button>
+                      </div>
+
+                <div>
+
+                </div>
+
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle JS (inclui Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script>
+        feather.replace(); // Para ativar os ícones Feather
+
+    $(document).ready(function() {
+        // Lógica para selecionar/deselecionar todos os checkboxes
+        $('#selectAllCheckbox').on('change', function() {
+            // Se o "Selecionar Todos" estiver marcado, marca todos os checkboxes de produtos
+            // Caso contrário, desmarca todos.
+            // Importante: esta lógica deve considerar apenas os checkboxes VISÍVEIS se o filtro estiver aplicado
+            // ou todos, dependendo do comportamento desejado. Por simplicidade, aqui afeta todos.
+            $('.product-checkbox').prop('checked', $(this).is(':checked'));
+        });
+
+        // Lógica para desmarcar o "Selecionar Todos" se algum item for desmarcado individualmente
+        $('.product-checkbox').on('change', function() {
+            if (!$(this).is(':checked')) {
+                $('#selectAllCheckbox').prop('checked', false);
+            }
+            // Opcional: se todos estiverem marcados individualmente, marcar o "Selecionar Todos"
+            // var allChecked = $('.product-checkbox:not(:checked)').length === 0;
+            // $('#selectAllCheckbox').prop('checked', allChecked);
+        });
+
+
+        const $loadingOverlay = $('#loadingOverlay'); // Cache o seletor
+
+        $('#sendSelectedProductsForm').submit(function(event) {
+            event.preventDefault();
+
+            const selectedProductIds = [];
+            $('input[name="selected_products"]:checked').each(function() {
+                selectedProductIds.push($(this).val());
+            });
+
+            if (selectedProductIds.length === 0) {
+                alert('Por favor, selecione pelo menos um produto para enviar.');
+                return;
+            }
+
+            console.log('Produtos selecionados:', selectedProductIds);
+
+            $loadingOverlay.css('display', 'flex');
+            const $submitButton = $(this).find('button[type="submit"]');
+            $submitButton.prop('disabled', true).find('span[data-feather="send"]').hide();
+            $submitButton.prepend('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: $(this).attr('method'),
+                data: {
+                    produtos: selectedProductIds
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Resposta do servidor:',response);
+
+                    alert(response.resultados || 'Produtos enviados com sucesso!');
+                    window.location.reload(); // Opcional: recarregar
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Erro ao enviar produtos.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage += ' Detalhe: ' + xhr.responseJSON.error;
+                        if(xhr.responseJSON.details){
+                             errorMessage += ' Especificação: ' + xhr.responseJSON.details;
+                        }
+                    } else {
+                        errorMessage += ' Status: ' + status + ', Erro: ' + error;
+                    }
+                    alert(errorMessage);
+                    console.error('Erro na requisição:', xhr.responseJSON || xhr.responseText);
+                },
+                complete: function() {
+                    $loadingOverlay.hide();
+                    $submitButton.prop('disabled', false).find('.spinner-border').remove();
+                    $submitButton.find('span[data-feather="send"]').show();
+                     feather.replace();
+                }
+            });
+        });
+
+        $('#searchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                $(this).closest('form').submit();
+            }
+        });
+
+    });
+    </script>
+</body>
+</html>

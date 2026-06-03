@@ -10,17 +10,17 @@ export type IProdutoBlingSemPreco = Omit<IProdutoBling, 'preco'>
 type linksPhotosBling = { link:string };
 
 export class ProdutoMapper {
-
-
+  
   /**
    * 
    * @param produto 
    * @param  sendPrice parametro  de envio de preco ( 0: nao enviar preco, 1: enviar o preco) 
    * @param categoryIdBling id da categoria no bling
    * @param tabela codigo da tabela de preço a ser enviada 
+   * @param tipo tipo de produto no bling T Todos, P Produtos, S Serviços, E Composições, PS Produtos simples, C Com variações, V Variações
    * @returns 
    */
- static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false): Promise<IProdutoBling> {
+ static async postProdutoMapper(produto: IProductSystem, sendPrice: number, categoryIdBling: number, caminhoFotos:string,  tabela?: number, skipPhotos: boolean = false, tipo = 'P'): Promise<IProdutoBling> {
     return new Promise(async (resolve, reject) => {
 
       let preco: number = 0;
@@ -81,11 +81,11 @@ export class ProdutoMapper {
       const descricaoCurta = produto.DESCR_CURTA_MKTPLACE ? produto.DESCR_CURTA_MKTPLACE : produto.APLICACAO;
 
       const post: IProdutoBling = {
-        codigo: produto.CODIGO,
+        codigo: produto.CODIGO ,
         nome: nome,
         descricaoCurta: descricaoCurta,
         descricaoComplementar: produto.DESCR_LONGA_MKTPLACE || '',
-        tipo: 'P',
+        tipo: tipo,
         marca: marca,
         situacao: 'A',
         gtin: gtin ,
