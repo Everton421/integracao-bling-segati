@@ -20,6 +20,8 @@ import { SyncProduct } from "../core/products/services/sync-product";
 import { SyncCompany } from "../core/company/services/company-request";
 import { ProdutoEditarController } from "../core/products/controller/produto-editar-controller";
 import { ProductGridController } from "../core/products_grid/controller/product-grid-controller";
+import { ExportInvoicesController } from "../core/export-invoices/controller/export-invoices.controller";
+const exportInvoicesController = new ExportInvoicesController();
 
 const router = Router();
 
@@ -153,6 +155,10 @@ router.get("/testeCompany",async  ( req, res )=>{
 // router.get("/testeNaturezaOperacao",async  ( req, res )=>{
 //     await testeNaturezaOperacao();
 // })
+
+router.get('/export-invoices', verificaToken, exportInvoicesController.view);
+router.get('/api/export-invoices/notas', verificaToken, exportInvoicesController.listNotas);
+router.get('/export-invoices/download', verificaToken, exportInvoicesController.export);
 
 router.get("/teste1", new  SyncProduct().getProduct)
 

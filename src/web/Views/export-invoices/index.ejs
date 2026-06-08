@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exportar Notas Fiscais</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <style>
+        .table th { white-space: nowrap; }
+        .price-column { text-align: right; }
+        .action-buttons { margin-top: 20px; margin-bottom: 20px; }
+        .no-results { text-align: center; font-style: italic; color: #6c757d; }
+    </style>
+</head>
+
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+    <p class="text-light mt-2">Processando, por favor aguarde...</p>
+</div>
+
+<body>
+    <%- include('../components/navbar', { activePage: 'home' }) %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../components/sidebar', { activePage: 'export-invoices' }) %>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Exportar Notas Fiscais</h1>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="filterForm" class="row g-3 align-items-end">
+                            <div class="col-auto">
+                                <label for="dataInicio" class="form-label">Data Início</label>
+                                <input type="date" class="form-control" id="dataInicio" name="dataInicio" required>
+                            </div>
+                            <div class="col-auto">
+                                <label for="dataFim" class="form-label">Data Fim</label>
+                                <input type="date" class="form-control" id="dataFim" name="dataFim" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary" id="btnBuscar">
+                                    <span data-feather="search"></span> Buscar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="resultsArea" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="mb-0">Total de notas encontradas: <span class="badge bg-info" id="totalNotas">0</span></p>
+                    </div>
+
+                    <form id="exportForm" method="GET">
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-success" id="btnExportar">
+                                <span data-feather="download"></span> Exportar Selecionadas
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-bordered table-sm" id="notasTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col">
+                                            <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                                        </th>
+                                        <th scope="col">Nº NF</th>
+                                        <th scope="col">Série</th>
+                                        <th scope="col">Data Emissão</th>
+                                        <th scope="col">Tipo</th>
+                                        <th scope="col">CFOP</th>
+                                        <th scope="col">Cliente</th>
+                                        <th scope="col" class="price-column">Total (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="notasTableBody">
+                                    <tr id="noResultsRow" style="display: none;">
+                                        <td colspan="8" class="no-results">Nenhuma nota encontrada para o período.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+
+    <script>
+        feather.replace();
+
+        $(document).ready(function() {
+            const $loadingOverlay = $('#loadingOverlay');
+            const $resultsArea = $('#resultsArea');
+            const $totalNotas = $('#totalNotas');
+            const $tableBody = $('#notasTableBody');
+            const $noResultsRow = $('#noResultsRow');
+
+            $('#filterForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const dataInicio = $('#dataInicio').val();
+                const dataFim = $('#dataFim').val();
+
+                if (!dataInicio || !dataFim) {
+                    alert('Preencha as datas de início e fim.');
+                    return;
+                }
+
+                $loadingOverlay.css('display', 'flex');
+
+                $.ajax({
+                    url: '/api/export-invoices/notas',
+                    type: 'GET',
+                    data: { dataInicio, dataFim },
+                    dataType: 'json',
+                    success: function(response) {
+                        const notas = response.data || [];
+                        $tableBody.find('tr:not(#noResultsRow)').remove();
+
+                        if (notas.length === 0) {
+                            $noResultsRow.show();
+                            $resultsArea.show();
+                            $totalNotas.text('0');
+                            return;
+                        }
+
+                        $noResultsRow.hide();
+                        $totalNotas.text(notas.length);
+
+                        notas.forEach(function(nota) {
+                            const dataEmissao = nota.DATA_EMISSAO ? new Date(nota.DATA_EMISSAO).toLocaleDateString('pt-BR') : '';
+                            const operacao = nota.OPERACAO === 'I' ? 'Interna' : nota.OPERACAO === 'E' ? 'Entrada' : 'Saída';
+                            const total = typeof nota.TOTAL_NF === 'number' ? nota.TOTAL_NF.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'N/A';
+
+                            const row = `
+                                <tr>
+                                    <td>
+                                        <input class="form-check-input nota-checkbox" type="checkbox" value="${nota.CODIGO}">
+                                    </td>
+                                    <td>${nota.NUMERO_NF || ''}</td>
+                                    <td>${nota.SERIE_NF || nota.SERIE || ''}</td>
+                                    <td>${dataEmissao}</td>
+                                    <td>${operacao}</td>
+                                    <td>${nota.CFOP || ''}</td>
+                                    <td>${nota.CLI_FOR || ''}</td>
+                                    <td class="price-column">${total}</td>
+                                </tr>
+                            `;
+                            $tableBody.append(row);
+                        });
+
+                        $resultsArea.show();
+                        feather.replace();
+                    },
+                    error: function(xhr) {
+                        let msg = 'Erro ao buscar notas.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) msg += ' ' + xhr.responseJSON.error;
+                        alert(msg);
+                    },
+                    complete: function() {
+                        $loadingOverlay.hide();
+                    }
+                });
+            });
+
+            $('#selectAllCheckbox').on('change', function() {
+                $('.nota-checkbox:visible').prop('checked', $(this).is(':checked'));
+            });
+
+            $(document).on('change', '.nota-checkbox', function() {
+                if (!$(this).is(':checked')) {
+                    $('#selectAllCheckbox').prop('checked', false);
+                }
+            });
+
+            $('#exportForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const dataInicio = $('#dataInicio').val();
+                const dataFim = $('#dataFim').val();
+                const selected = [];
+                $('.nota-checkbox:checked').each(function() {
+                    selected.push($(this).val());
+                });
+
+                if (selected.length === 0) {
+                    alert('Selecione pelo menos uma nota fiscal para exportar.');
+                    return;
+                }
+
+                const params = new URLSearchParams({ dataInicio, dataFim, codigos: selected.join(',') });
+                window.location.href = '/export-invoices/download?' + params.toString();
+            });
+
+            if (!localStorage.getItem('dataInicio') && !localStorage.getItem('dataFim')) {
+                const hoje = new Date();
+                const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                $('#dataInicio').val(inicioMes.toISOString().split('T')[0]);
+                $('#dataFim').val(hoje.toISOString().split('T')[0]);
+            }
+        });
+    </script>
+</body>
+</html>

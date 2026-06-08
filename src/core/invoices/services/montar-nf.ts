@@ -5,7 +5,7 @@ import { NfMapper } from "../mapping/nf-mapper";
 
 
 
-export class montarNf{
+export class MontarNf{
     static async exec (codigo_pedido_sistema:number){
         const nfRepository = new NfRepository();
         const apiConfigNfeRepository = new ApiConfigNfeRepository();

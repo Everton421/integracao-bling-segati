@@ -59,6 +59,12 @@
         </h6>
         <ul class="nav flex-column mb-2">
             <li class="nav-item">
+                <a class="nav-link <%= activePage === 'export-invoices' ? 'active' : '' %>" href="/export-invoices">
+                    <span data-feather="file-text"></span>
+                    Exportar NFs
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <%= activePage === 'logs' ? 'active' : '' %>" href="#">
                     <span data-feather="file-text"></span>
                     Logs Gerais
